@@ -1,93 +1,264 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>水果大戰爭</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🍋 水果大戰爭</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-<!-- 登入 -->
-<div id="loginPage" class="page">
-    <div class="card">
-        <h1>🍓 水果大戰爭</h1>
+<!-- ══ Toast Container ════════════════════════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer"></div>
 
-        <input id="playerName" placeholder="輸入名字">
-        <input id="googleAccount" placeholder="Google帳號">
-
-        <button onclick="enterLobby()">開始遊戲</button>
-    </div>
-</div>
-
-<!-- 大廳 -->
-<div id="lobbyPage" class="page hidden">
-    <h1>遊戲大廳</h1>
-
-    <div>華幣：<span id="coins">100</span></div>
-
-    <button onclick="startSingle()">單機模式</button>
-    <button onclick="openMulti()">多人模式</button>
-    <button onclick="openShop()">商店</button>
-    <button onclick="openDaily()">每日任務</button>
-</div>
-
-<!-- 配對 -->
-<div id="matchPage" class="page hidden">
-    <h1>配對中...</h1>
-    <div id="countdown">5</div>
-</div>
-
-<!-- 選角 -->
-<div id="characterPage" class="page hidden">
-    <h1>選擇角色</h1>
-
-    <button onclick="selectCharacter('芒妹')">芒妹</button>
-    <button onclick="selectCharacter('桃妹')">桃妹</button>
-    <button onclick="selectCharacter('茶妹')">茶妹</button>
-    <button onclick="selectCharacter('米米')">米米</button>
-    <button onclick="selectCharacter('檸檬酸')">檸檬酸</button>
-
-    <button onclick="confirmCharacter()">確定</button>
-</div>
-
-<!-- 戰鬥 -->
-<div id="gamePage" class="page hidden">
-
-    <h2 id="playerCharacter"></h2>
-    <h2 id="enemyCharacter"></h2>
-
-    <div>
-        <div>玩家HP</div>
-        <div id="playerHpBar" class="bar"></div>
-
-        <div>敵人HP</div>
-        <div id="enemyHpBar" class="bar"></div>
+<!-- ══════════════════════════════════════════════════════════════════════════
+  SCREEN 1: LOGIN
+══════════════════════════════════════════════════════════════════════════════ -->
+<section id="screen-login" class="screen active">
+  <div class="login-card">
+    <div class="game-logo">
+      <span class="logo-emojis">🥭🍑🍵🍚🍋</span>
+      <div class="logo-title">水果大戰爭</div>
+      <div class="logo-sub">Fruit Battle War</div>
     </div>
 
-    <button onclick="attack()">攻擊</button>
-
-    <div id="upgradeArea" class="hidden">
-        <button onclick="upgradeSkill()">升級技能</button>
+    <div class="form-group">
+      <label>玩家名稱</label>
+      <input type="text" id="inputUsername" placeholder="輸入你的名字..." maxlength="16" />
     </div>
+    <div class="form-group">
+      <label>綁定 Google 帳號</label>
+      <input type="email" id="inputGoogle" placeholder="example@gmail.com" />
+    </div>
+
+    <button class="btn btn-primary" id="btnLogin" style="margin-top:0.5rem">
+      🎮 開始遊戲
+    </button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  SCREEN 2: LOBBY
+══════════════════════════════════════════════════════════════════════════════ -->
+<section id="screen-lobby" class="screen">
+  <!-- Header -->
+  <header class="lobby-header">
+    <div class="lobby-logo">🍋 水果大戰爭</div>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <div class="coins-display">
+        <span class="coin-icon">🪙</span>
+        <span id="coinsDisplay">0</span>
+      </div>
+      <div class="lobby-player">
+        👤 <span class="name" id="lobbyPlayerName">玩家</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Body -->
+  <div class="lobby-body">
+    <div class="lobby-banner">
+      <div class="banner-emoji">⚔️</div>
+      <h2>歡迎來到戰場！</h2>
+      <p>選擇模式，開始你的水果大戰吧</p>
+    </div>
+
+    <div class="lobby-grid">
+      <!-- Solo -->
+      <button class="lobby-btn" id="btnSolo">
+        <div class="lb-icon">🤖</div>
+        <div class="lb-title">單機模式</div>
+        <div class="lb-desc">對抗 AI 電腦</div>
+      </button>
+      <!-- Multi -->
+      <button class="lobby-btn btn-multi" id="btnMulti">
+        <div class="lb-icon">🌐</div>
+        <div class="lb-title">多人模式</div>
+        <div class="lb-desc">線上 PvP 對戰</div>
+      </button>
+      <!-- Shop -->
+      <button class="lobby-btn btn-shop" id="btnShop">
+        <div class="lb-icon">🛒</div>
+        <div class="lb-title">商店</div>
+        <div class="lb-desc">購買道具</div>
+      </button>
+      <!-- Daily -->
+      <button class="lobby-btn btn-daily" id="btnDaily">
+        <div class="lb-icon">📅</div>
+        <div class="lb-title">每日任務</div>
+        <div class="lb-desc">領取每日獎勵</div>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  SCREEN 3: QUEUE (waiting)
+══════════════════════════════════════════════════════════════════════════════ -->
+<section id="screen-queue" class="screen">
+  <div class="queue-card">
+    <div class="queue-title" id="queueTitle">配對大廳</div>
+    <div class="queue-spinner"></div>
+    <div class="queue-timer" id="queueTimer">0</div>
+    <div class="queue-status" id="queueStatus">等待配對中...</div>
+    <button class="btn btn-secondary" id="btnLeaveQueue">取消</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  SCREEN 4: GAME
+══════════════════════════════════════════════════════════════════════════════ -->
+<section id="screen-game" class="screen">
+  <header class="game-header">
+    <div class="game-round">第 <span id="roundNum">1</span> 回合</div>
+    <div class="wins-tracker">
+      <div class="win-dot" id="myWin1"></div>
+      <div class="win-dot" id="myWin2"></div>
+      <div class="win-dot" id="myWin3"></div>
+      <span style="margin:0 0.5rem;color:var(--muted)">VS</span>
+      <div class="win-dot" id="oppWin1"></div>
+      <div class="win-dot" id="oppWin2"></div>
+      <div class="win-dot" id="oppWin3"></div>
+    </div>
+    <div class="game-mode-badge" id="gameModeLabel">單機</div>
+  </header>
+
+  <div class="battle-arena">
+    <!-- Opponent -->
+    <div class="fighter-card opponent" id="oppCard">
+      <div class="fighter-info">
+        <div class="fighter-avatar" id="oppAvatar">❓</div>
+        <div class="fighter-details">
+          <div class="fighter-name">
+            <span id="oppName">對手</span>
+            <span class="fighter-level" id="oppLevel">Lv.1</span>
+          </div>
+          <div class="fighter-char-name" id="oppCharName">-</div>
+        </div>
+      </div>
+      <div class="hp-bar-wrap">
+        <div class="hp-bar-bg">
+          <div class="hp-bar-fill" id="oppHpBar" style="width:100%"></div>
+        </div>
+        <div class="hp-text" id="oppHpText">100/100</div>
+      </div>
+    </div>
+
+    <!-- VS -->
+    <div class="vs-divider">
+      <div class="vs-line"></div>
+      <div class="vs-text">⚔️ VS ⚔️</div>
+      <div class="vs-line"></div>
+    </div>
+
+    <!-- Player -->
+    <div class="fighter-card" id="myCard">
+      <div class="fighter-info">
+        <div class="fighter-avatar" id="myAvatar">❓</div>
+        <div class="fighter-details">
+          <div class="fighter-name">
+            <span id="myName">我</span>
+            <span class="fighter-level" id="myLevel">Lv.1</span>
+          </div>
+          <div class="fighter-char-name" id="myCharName">-</div>
+        </div>
+      </div>
+      <div class="hp-bar-wrap">
+        <div class="hp-bar-bg">
+          <div class="hp-bar-fill" id="myHpBar" style="width:100%"></div>
+        </div>
+        <div class="hp-text" id="myHpText">100/100</div>
+      </div>
+    </div>
+
+    <!-- Battle Log -->
+    <div class="battle-log" id="battleLog">
+      <div class="log-entry log-system">⚔️ 戰鬥開始！</div>
+    </div>
+
+    <!-- Action -->
+    <div class="action-area">
+      <div class="turn-indicator" id="turnIndicator">等待中...</div>
+      <button class="skill-btn" id="btnSkill" disabled>
+        ⚡ 施放技能
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+  MODALS
+══════════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Character Select Modal -->
+<div class="modal-overlay" id="modalCharSelect">
+  <div class="modal">
+    <h2>🎭 選擇角色</h2>
+    <div class="char-grid" id="charGrid">
+      <!-- filled by JS -->
+    </div>
+    <div style="display:flex;gap:0.75rem;">
+      <button class="btn btn-secondary" id="btnCharCancel" style="flex:1">取消</button>
+      <button class="btn btn-primary" id="btnCharConfirm" style="flex:2">✅ 確定出戰</button>
+    </div>
+  </div>
 </div>
 
-<!-- 每日 -->
-<div id="dailyPage" class="page hidden">
-    <h1>每日任務</h1>
-
-    <button onclick="claimDaily(1)">30</button>
-    <button onclick="claimDaily(2)">40</button>
-    <button onclick="claimDaily(3)">50</button>
-    <button onclick="claimDaily(4)">60</button>
-    <button onclick="claimDaily(5)">70</button>
-    <button onclick="claimDaily(6)">80</button>
-    <button onclick="claimDaily(7)">100</button>
-
-    <button onclick="backLobby()">返回</button>
+<!-- Shop Modal -->
+<div class="modal-overlay" id="modalShop">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" id="btnShopClose">✕</button>
+    <h2>🛒 商店</h2>
+    <div class="shop-updating">
+      <span class="update-icon">⚙️</span>
+      <p>遊戲正在更新中...</p>
+      <p style="font-size:0.75rem;margin-top:0.5rem;color:#4a3f7a">請稍後再來查看！</p>
+    </div>
+  </div>
 </div>
 
+<!-- Daily Modal -->
+<div class="modal-overlay" id="modalDaily">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" id="btnDailyClose">✕</button>
+    <h2>📅 每日簽到</h2>
+    <div class="daily-grid" id="dailyGrid">
+      <!-- filled by JS -->
+    </div>
+    <button class="btn btn-gold" id="btnClaimDaily" style="width:100%">
+      🪙 領取今日獎勵
+    </button>
+    <p id="dailyMsg" style="text-align:center;margin-top:0.75rem;font-size:0.85rem;color:var(--muted)"></p>
+  </div>
+</div>
+
+<!-- Level Up Modal -->
+<div class="modal-overlay" id="modalLevelUp">
+  <div class="modal level-up-modal">
+    <div class="lv-emoji">⬆️</div>
+    <h3>技能升級！</h3>
+    <p>你贏得了一次技能強化機會！<br>升級技能使傷害增加 15%</p>
+    <button class="btn btn-gold" id="btnDoLevelUp" style="width:100%">
+      🚀 立即升級！
+    </button>
+  </div>
+</div>
+
+<!-- Match Result Modal -->
+<div class="modal-overlay" id="modalResult">
+  <div class="modal result-modal">
+    <span class="result-emoji" id="resultEmoji">🏆</span>
+    <div class="result-title" id="resultTitle">勝利！</div>
+    <div class="result-desc" id="resultDesc">恭喜你贏得比賽！</div>
+    <div class="result-coins" id="resultCoins" style="display:none">🪙 獲得 50 華幣！</div>
+    <button class="btn btn-primary" id="btnBackLobby" style="width:100%">
+      🏠 回到大廳
+    </button>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="/socket.io/socket.io.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
