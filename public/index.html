@@ -1,223 +1,100 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>小麻將 · Xiao Mahjong</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>水果大戰爭</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ── Global BG ─────────────────────────────────────────── -->
-<div class="bg-layer bg-stars"></div>
-<div class="bg-layer bg-gradient"></div>
-<div class="bg-layer bg-glow-left"></div>
-<div class="bg-layer bg-glow-right"></div>
-<div class="bg-layer bg-pattern"></div>
+<div id="loginPage" class="page">
+    <div class="card">
+        <h1>🍓 水果大戰爭</h1>
 
-<!-- ── Connection Status ──────────────────────────────────── -->
-<div class="conn-status disconnected" id="conn-status">○ 連線中…</div>
+        <input type="text" id="playerName" placeholder="輸入你的名字">
+        <input type="text" id="googleAccount" placeholder="輸入Google帳號">
 
-<!-- ── Toast ─────────────────────────────────────────────── -->
-<div class="toast-wrap" id="toast-wrap"></div>
-
-<!-- ════════════════════════════════════════════════════════
-     SCREEN 1: LOGIN
-     ════════════════════════════════════════════════════════ -->
-<div class="screen active" id="screen-login">
-  <div class="login-hero">
-    <div class="login-tiles-deco">
-      <div class="deco-tile red-tile">中</div>
-      <div class="deco-tile black-tile">🀇</div>
-      <div class="deco-tile green-tile">發</div>
-      <div class="deco-tile black-tile">🀙</div>
-      <div class="deco-tile red-tile">東</div>
+        <button onclick="enterLobby()">進入遊戲</button>
     </div>
-    <div class="logo-title">小麻將</div>
-    <div class="logo-divider"></div>
-    <div class="logo-en">XIAO MAHJONG</div>
-  </div>
-
-  <div class="login-card">
-    <div class="login-card-title">✦ 歡 迎 入 桌 ✦</div>
-    <div class="form-group">
-      <label class="form-label" for="login-name-input">玩家名稱</label>
-      <input class="form-input" id="login-name-input" type="text"
-             placeholder="請輸入您的名稱" maxlength="12" autocomplete="off">
-    </div>
-    <button class="btn-primary" id="login-btn">進 入 遊 戲</button>
-  </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════
-     SCREEN 2: MAIN LOBBY
-     ════════════════════════════════════════════════════════ -->
-<div class="screen" id="screen-main">
-  <!-- Top bar -->
-  <div class="main-topbar">
-    <div class="topbar-logo">小麻將</div>
-    <div class="topbar-right">
-      <div class="qi-coin">
-        <span class="qi-coin-icon">🪙</span>
-        <span class="qi-coin-amount qi-amount">1200</span>
-        <span class="qi-coin-label">琪幣</span>
-      </div>
-      <div class="player-avatar player-avatar-char">玩</div>
+<div id="lobbyPage" class="page hidden">
+    <div class="topBar">
+        <h2>水果大戰爭</h2>
+        <div class="money">華幣：<span id="coins">100</span></div>
     </div>
-  </div>
 
-  <!-- Banner -->
-  <div class="main-banner">
-    <div class="player-avatar" style="width:52px;height:52px;font-size:22px;" class="player-avatar-char">玩</div>
-    <div>
-      <div class="banner-greeting">歡迎回來</div>
-      <div class="banner-name player-name-display">玩家</div>
-      <div class="banner-sub">今日已簽到 · 連勝 0 場</div>
+    <div class="menu">
+        <button onclick="openShop()">商店</button>
+        <button onclick="startSingle()">單機模式</button>
+        <button onclick="openMulti()">多人模式</button>
+        <button onclick="openDaily()">每日任務</button>
     </div>
-  </div>
+</div>
 
-  <!-- Grid -->
-  <div class="main-grid">
-    <!-- Friend Table - Full width, featured -->
-    <div class="game-card full card-friend" id="btn-go-friend">
-      <div style="display:flex;align-items:center;gap:16px">
-        <div class="card-icon-wrap jade-bg">🀅</div>
-        <div>
-          <div class="card-name jade-text">好 友 桌</div>
-          <div class="card-desc">建立私人房間，邀請好友一同對局<br>支援二人麻將與四人普通麻將</div>
+<div id="matchPage" class="page hidden">
+    <h1>正在配對...</h1>
+    <div id="countdown">5</div>
+</div>
+
+<div id="characterPage" class="page hidden">
+    <h1>選擇角色</h1>
+
+    <div class="characters">
+        <div class="character" onclick="selectCharacter('芒妹')">🥭 芒妹</div>
+        <div class="character" onclick="selectCharacter('桃妹')">🍑 桃妹</div>
+        <div class="character" onclick="selectCharacter('茶妹')">🧋 茶妹</div>
+        <div class="character" onclick="selectCharacter('米米')">🍙 米米</div>
+        <div class="character" onclick="selectCharacter('檸檬酸')">🍋 檸檬酸</div>
+    </div>
+
+    <button onclick="confirmCharacter()">確定</button>
+</div>
+
+<div id="gamePage" class="page hidden">
+
+    <div class="battleArea">
+
+        <div class="player">
+            <h2 id="playerCharacter">玩家</h2>
+            <div class="hpBar">
+                <div id="playerHp"></div>
+            </div>
         </div>
-        <div style="margin-left:auto;font-size:28px;opacity:0.3">›</div>
-      </div>
-    </div>
 
-    <!-- Quest -->
-    <div class="game-card" id="btn-go-quest">
-      <div class="card-ribbon">NEW</div>
-      <div class="card-icon-wrap">📋</div>
-      <div class="card-name">每日任務</div>
-      <div class="card-desc">完成任務領取琪幣獎勵</div>
-    </div>
-
-    <!-- Quick Match -->
-    <div class="game-card" id="btn-quick-match">
-      <div class="card-icon-wrap">⚡</div>
-      <div class="card-name">快速對局</div>
-      <div class="card-desc">隨機匹配對手，即時開戰</div>
-    </div>
-
-    <!-- Leaderboard -->
-    <div class="game-card" id="btn-leaderboard">
-      <div class="card-icon-wrap">🏆</div>
-      <div class="card-name">排 行 榜</div>
-      <div class="card-desc">全服戰績排名</div>
-    </div>
-
-    <!-- Replay -->
-    <div class="game-card" id="btn-replay">
-      <div class="card-icon-wrap">🎴</div>
-      <div class="card-name">牌局回放</div>
-      <div class="card-desc">回顧精彩對局過程</div>
-    </div>
-  </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════
-     SCREEN 3: QUEST
-     ════════════════════════════════════════════════════════ -->
-<div class="screen" id="screen-quest">
-  <div class="sub-header">
-    <button class="btn-ghost" data-back="screen-main">← 返回</button>
-    <div class="sub-title">🪙 每日任務</div>
-    <div style="margin-left:auto;font-size:12px;color:var(--text-dim)">
-      琪幣：<span class="qi-amount" style="color:var(--gold)">1200</span>
-    </div>
-  </div>
-  <div class="quest-list" id="quest-list-body"></div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════
-     SCREEN 4: FRIEND ROOM
-     ════════════════════════════════════════════════════════ -->
-<div class="screen" id="screen-friend">
-  <div class="sub-header">
-    <button class="btn-ghost" data-back="screen-main">← 返回</button>
-    <div class="sub-title">🀅 好友桌</div>
-  </div>
-
-  <div class="friend-body" style="overflow-y:auto;flex:1;width:100%;max-width:480px;margin:0 auto">
-
-    <!-- Mode Select -->
-    <div class="section-card">
-      <div class="section-label">選擇遊戲模式</div>
-      <div class="mode-options">
-        <div class="mode-option" id="opt-2p">
-          <input type="checkbox" class="mode-checkbox" id="mode-2p" value="2p">
-          <label for="mode-2p">二人麻將</label>
-          <span class="mode-badge">2人</span>
+        <div class="enemy">
+            <h2 id="enemyCharacter">敵人</h2>
+            <div class="hpBar">
+                <div id="enemyHp"></div>
+            </div>
         </div>
-        <div class="mode-option" id="opt-4p">
-          <input type="checkbox" class="mode-checkbox" id="mode-4p" value="4p">
-          <label for="mode-4p">普通麻將</label>
-          <span class="mode-badge">4人</span>
-        </div>
-      </div>
+
     </div>
 
-    <!-- Create room -->
-    <button class="btn-jade" id="create-room-btn" disabled>建立房間</button>
+    <button id="attackBtn" onclick="attack()">施放技能</button>
 
-    <!-- Room Code (shown after creation) -->
-    <div id="room-code-section" style="display:none">
-      <div class="room-code-box">
-        <div class="room-code-label">房間代碼</div>
-        <div class="room-code-value" id="room-code-display">----</div>
-        <div class="room-waiting">
-          等待好友加入
-          <div class="dots"><span></span><span></span><span></span></div>
-        </div>
-      </div>
-
-      <div class="section-card" style="margin-top:12px">
-        <div class="section-label">房間成員</div>
-        <div class="player-slots" id="player-slots"></div>
-      </div>
-
-      <button class="btn-red" id="host-start-btn" disabled style="margin-top:4px">
-        ✦ 開始對局 ✦
-      </button>
+    <div id="upgradeArea" class="hidden">
+        <h2>技能升級！</h2>
+        <button onclick="upgradeSkill()">升級技能</button>
     </div>
 
-    <!-- Join by code -->
-    <div class="divider-or">或輸入好友代碼加入</div>
-    <div class="join-row">
-      <input class="join-input" id="join-code-input" type="text"
-             maxlength="4" placeholder="輸入代碼" autocomplete="off">
-      <button class="btn-join" id="join-btn">加入</button>
-    </div>
-
-  </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════
-     SCREEN 5: GAME
-     ════════════════════════════════════════════════════════ -->
-<div class="screen" id="screen-game">
-  <div id="game-board" style="width:100%;height:100%;position:relative"></div>
-</div>
+<div id="dailyPage" class="page hidden">
+    <h1>每日任務</h1>
 
-<!-- ════════════════════════════════════════════════════════
-     OVERLAY: GAME OVER
-     ════════════════════════════════════════════════════════ -->
-<div class="overlay" id="overlay-gameover">
-  <div class="modal win-modal">
-    <div class="modal-title" id="gameover-title">對局結束</div>
-    <div style="font-size:14px;color:var(--text-dim);text-align:center" id="gameover-sub"></div>
-    <div id="gameover-hands" style="margin:20px 0;max-height:160px;overflow-y:auto"></div>
-    <div class="modal-btns">
-      <button class="btn-jade" id="gameover-replay">再來一局</button>
-      <button class="btn-ghost" id="gameover-exit" style="width:100%;padding:12px;text-align:center">返回大廳</button>
+    <div class="dailyList">
+        <button onclick="claimDaily(1)">第一天 華幣30</button>
+        <button onclick="claimDaily(2)">第二天 華幣40</button>
+        <button onclick="claimDaily(3)">第三天 華幣50</button>
+        <button onclick="claimDaily(4)">第四天 華幣60</button>
+        <button onclick="claimDaily(5)">第五天 華幣70</button>
+        <button onclick="claimDaily(6)">第六天 華幣80</button>
+        <button onclick="claimDaily(7)">第七天 華幣100</button>
     </div>
-  </div>
+
+    <button onclick="backLobby()">返回</button>
 </div>
 
 <script src="game.js"></script>
