@@ -6,93 +6,84 @@
 <title>水果大戰爭</title>
 <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
+<!-- 登入 -->
 <div id="loginPage" class="page">
     <div class="card">
         <h1>🍓 水果大戰爭</h1>
 
-        <input type="text" id="playerName" placeholder="輸入你的名字">
-        <input type="text" id="googleAccount" placeholder="輸入Google帳號">
+        <input id="playerName" placeholder="輸入名字">
+        <input id="googleAccount" placeholder="Google帳號">
 
-        <button onclick="enterLobby()">進入遊戲</button>
+        <button onclick="enterLobby()">開始遊戲</button>
     </div>
 </div>
 
+<!-- 大廳 -->
 <div id="lobbyPage" class="page hidden">
-    <div class="topBar">
-        <h2>水果大戰爭</h2>
-        <div class="money">華幣：<span id="coins">100</span></div>
-    </div>
+    <h1>遊戲大廳</h1>
 
-    <div class="menu">
-        <button onclick="openShop()">商店</button>
-        <button onclick="startSingle()">單機模式</button>
-        <button onclick="openMulti()">多人模式</button>
-        <button onclick="openDaily()">每日任務</button>
-    </div>
+    <div>華幣：<span id="coins">100</span></div>
+
+    <button onclick="startSingle()">單機模式</button>
+    <button onclick="openMulti()">多人模式</button>
+    <button onclick="openShop()">商店</button>
+    <button onclick="openDaily()">每日任務</button>
 </div>
 
+<!-- 配對 -->
 <div id="matchPage" class="page hidden">
-    <h1>正在配對...</h1>
+    <h1>配對中...</h1>
     <div id="countdown">5</div>
 </div>
 
+<!-- 選角 -->
 <div id="characterPage" class="page hidden">
     <h1>選擇角色</h1>
 
-    <div class="characters">
-        <div class="character" onclick="selectCharacter('芒妹')">🥭 芒妹</div>
-        <div class="character" onclick="selectCharacter('桃妹')">🍑 桃妹</div>
-        <div class="character" onclick="selectCharacter('茶妹')">🧋 茶妹</div>
-        <div class="character" onclick="selectCharacter('米米')">🍙 米米</div>
-        <div class="character" onclick="selectCharacter('檸檬酸')">🍋 檸檬酸</div>
-    </div>
+    <button onclick="selectCharacter('芒妹')">芒妹</button>
+    <button onclick="selectCharacter('桃妹')">桃妹</button>
+    <button onclick="selectCharacter('茶妹')">茶妹</button>
+    <button onclick="selectCharacter('米米')">米米</button>
+    <button onclick="selectCharacter('檸檬酸')">檸檬酸</button>
 
     <button onclick="confirmCharacter()">確定</button>
 </div>
 
+<!-- 戰鬥 -->
 <div id="gamePage" class="page hidden">
 
-    <div class="battleArea">
+    <h2 id="playerCharacter"></h2>
+    <h2 id="enemyCharacter"></h2>
 
-        <div class="player">
-            <h2 id="playerCharacter">玩家</h2>
-            <div class="hpBar">
-                <div id="playerHp"></div>
-            </div>
-        </div>
+    <div>
+        <div>玩家HP</div>
+        <div id="playerHpBar" class="bar"></div>
 
-        <div class="enemy">
-            <h2 id="enemyCharacter">敵人</h2>
-            <div class="hpBar">
-                <div id="enemyHp"></div>
-            </div>
-        </div>
-
+        <div>敵人HP</div>
+        <div id="enemyHpBar" class="bar"></div>
     </div>
 
-    <button id="attackBtn" onclick="attack()">施放技能</button>
+    <button onclick="attack()">攻擊</button>
 
     <div id="upgradeArea" class="hidden">
-        <h2>技能升級！</h2>
         <button onclick="upgradeSkill()">升級技能</button>
     </div>
-
 </div>
 
+<!-- 每日 -->
 <div id="dailyPage" class="page hidden">
     <h1>每日任務</h1>
 
-    <div class="dailyList">
-        <button onclick="claimDaily(1)">第一天 華幣30</button>
-        <button onclick="claimDaily(2)">第二天 華幣40</button>
-        <button onclick="claimDaily(3)">第三天 華幣50</button>
-        <button onclick="claimDaily(4)">第四天 華幣60</button>
-        <button onclick="claimDaily(5)">第五天 華幣70</button>
-        <button onclick="claimDaily(6)">第六天 華幣80</button>
-        <button onclick="claimDaily(7)">第七天 華幣100</button>
-    </div>
+    <button onclick="claimDaily(1)">30</button>
+    <button onclick="claimDaily(2)">40</button>
+    <button onclick="claimDaily(3)">50</button>
+    <button onclick="claimDaily(4)">60</button>
+    <button onclick="claimDaily(5)">70</button>
+    <button onclick="claimDaily(6)">80</button>
+    <button onclick="claimDaily(7)">100</button>
 
     <button onclick="backLobby()">返回</button>
 </div>
