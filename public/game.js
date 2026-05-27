@@ -1,5 +1,4 @@
-<script>
-document.getElementById("btnLogin").addEventListener("click", function () {
-    alert("開始遊戲！");
-});
-</script>
+document.getElementById("btnLogin").onclick = () => {
+    console.log("進入遊戲");
+    alert("進入遊戲成功");
+};
