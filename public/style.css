@@ -298,3 +298,5 @@ body::before{
   .skill-btn{width:70px;height:70px}
   .skill-icon{font-size:1.5rem}
 }
+CSSEOF
+echo "style.css done"
