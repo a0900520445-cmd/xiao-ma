@@ -13,6 +13,50 @@ app.use(express.static(path.join(__dirname, 'public')));
 const players = {};
 const rooms = new Map();
 const matchQueue = [];
+function createRoom(p1Id, p2Id, mode) {
+  const roomId = uuidv4();
+
+  const p1 = players[p1Id];
+  const p2 = players[p2Id];
+
+  const s1 = CHAR_STATS[p1.character] || CHAR_STATS.mango;
+  const s2 = CHAR_STATS[p2.character] || CHAR_STATS.mango;
+
+  const room = {
+    id: roomId,
+    mode,
+    players: [p1Id, p2Id],
+    status: 'fighting',
+    round: 1,
+    state: {
+      [p1Id]: {
+        hp: s1.hp,
+        maxHp: s1.hp,
+        atk: s1.atk,
+        level: 1,
+        wins: 0,
+        lastSkill: 0,
+        cd: s1.cd
+      },
+      [p2Id]: {
+        hp: s2.hp,
+        maxHp: s2.hp,
+        atk: s2.atk,
+        level: 1,
+        wins: 0,
+        lastSkill: 0,
+        cd: s2.cd
+      }
+    }
+  };
+
+  rooms.set(roomId, room);
+
+  players[p1Id].roomId = roomId;
+  players[p2Id].roomId = roomId;
+
+  return roomId;
+}
 
 const CHAR_STATS = {
   mango: { name:'芒妹',   hp:300, atk:22, cd:1200, color:'#FF8C00', skillName:'芒果颶風' },
@@ -48,7 +92,7 @@ function createRoom(p1Id, p2Id, mode) {
 }
 
 function checkRoundEnd(roomId) {
-  const room = rooms[roomId];
+  const room = rooms.get(roomId);
   if (!room || room.status !== 'fighting') return;
   const [p1Id, p2Id] = room.players;
   const s1 = room.state[p1Id], s2 = room.state[p2Id];
