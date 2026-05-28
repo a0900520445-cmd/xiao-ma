@@ -1,26 +1,64 @@
 // ═══════════════════════════════════════════════════════════════
-//  小麻將 · server.js  —  WebSocket Mahjong Server
-//  普通麻將 + 香港麻將 (2人) 規則
+//  小麻將 · server.js  ─  Node.js + WebSocket
+//  Features: 好友桌, 快速配對, 排行榜, users.json, 完整麻將規則
 // ═══════════════════════════════════════════════════════════════
 const express = require('express');
 const http    = require('http');
 const { WebSocketServer } = require('ws');
 const path    = require('path');
+const fs      = require('fs');
 
 const app    = express();
 const server = http.createServer(app);
 const wss    = new WebSocketServer({ server });
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
 
-// ─── helpers ──────────────────────────────────────────────────
-function genCode() {
-  return String(Math.floor(1000 + Math.random() * 9000));
+// ─── Users DB (users.json) ─────────────────────────────────────
+const USERS_FILE = path.join(__dirname, 'users.json');
+function loadUsers() {
+  try { return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8')); }
+  catch { return {}; }
 }
-function send(ws, obj) {
-  if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
+function saveUsers(u) {
+  fs.writeFileSync(USERS_FILE, JSON.stringify(u, null, 2));
 }
-function broadcast(players, obj) {
+
+app.post('/api/login', (req, res) => {
+  const { playerId, name } = req.body;
+  if (!playerId || !name) return res.json({ ok: false });
+  const users = loadUsers();
+  if (!users[playerId]) {
+    users[playerId] = { name, qi: 1200, wins: 0, losses: 0, games: 0, streak: 0, joinedAt: Date.now() };
+  } else {
+    users[playerId].name = name; // allow rename
+  }
+  saveUsers(users);
+  res.json({ ok: true, data: users[playerId] });
+});
+
+app.get('/api/leaderboard', (_, res) => {
+  const users = loadUsers();
+  const list = Object.entries(users).map(([id, u]) => ({ id, ...u }))
+    .sort((a, b) => (b.wins - a.wins) || (b.qi - a.qi))
+    .slice(0, 50);
+  res.json(list);
+});
+
+app.post('/api/update', (req, res) => {
+  const { playerId, delta } = req.body;
+  const users = loadUsers();
+  if (!users[playerId]) return res.json({ ok: false });
+  Object.assign(users[playerId], delta);
+  saveUsers(users);
+  res.json({ ok: true, data: users[playerId] });
+});
+
+// ─── Helpers ──────────────────────────────────────────────────
+function genCode() { return String(Math.floor(1000 + Math.random() * 9000)); }
+function wsSend(ws, obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+function bcast(players, obj) {
   const s = JSON.stringify(obj);
   players.forEach(p => { if (p.ws && p.ws.readyState === 1) p.ws.send(s); });
 }
@@ -28,478 +66,336 @@ function broadcast(players, obj) {
 // ─── Tile Engine ──────────────────────────────────────────────
 const SUITS  = ['m','p','s'];
 const HONORS = ['東','南','西','北','中','發','白'];
-
 function buildDeck() {
   const d = [];
-  for (const s of SUITS)
-    for (let n = 1; n <= 9; n++)
-      for (let k = 0; k < 4; k++) d.push(n + s);
-  for (const h of HONORS)
-    for (let k = 0; k < 4; k++) d.push(h);
+  for (const s of SUITS) for (let n=1;n<=9;n++) for (let k=0;k<4;k++) d.push(n+s);
+  for (const h of HONORS) for (let k=0;k<4;k++) d.push(h);
   return d;
 }
 function shuffle(a) {
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
+  for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
   return a;
 }
+const SUIT_ORDER = { m:0, p:1, s:2 };
 function sortHand(h) {
-  const order = { m: 0, p: 1, s: 2 };
-  return h.slice().sort((a, b) => {
-    const aHonor = HONORS.indexOf(a), bHonor = HONORS.indexOf(b);
-    if (aHonor !== -1 && bHonor !== -1) return aHonor - bHonor;
-    if (aHonor !== -1) return 1;
-    if (bHonor !== -1) return -1;
-    const as = a.slice(-1), bs = b.slice(-1);
-    if (as !== bs) return order[as] - order[bs];
-    return parseInt(a) - parseInt(b);
+  return h.slice().sort((a,b)=>{
+    const ai=HONORS.indexOf(a), bi=HONORS.indexOf(b);
+    if(ai!==-1&&bi!==-1) return ai-bi;
+    if(ai!==-1) return 1; if(bi!==-1) return -1;
+    const as=a.slice(-1), bs=b.slice(-1);
+    if(as!==bs) return SUIT_ORDER[as]-SUIT_ORDER[bs];
+    return parseInt(a)-parseInt(b);
   });
 }
 
-// ─── Win Detection ─────────────────────────────────────────────
-// Returns true if tiles form a complete hand (4 sets + 1 pair)
-function isWinningHand(tiles) {
-  const sorted = sortHand(tiles);
-  // Try each possible pair
-  for (let i = 0; i < sorted.length - 1; i++) {
-    if (sorted[i] === sorted[i + 1]) {
-      const rest = sorted.slice();
-      rest.splice(i, 2);
-      if (canFormSets(rest)) return true;
+// ─── Win Check ────────────────────────────────────────────────
+function isWinHand(tiles) {
+  const s = sortHand(tiles);
+  for (let i=0;i<s.length-1;i++) {
+    if (s[i]===s[i+1]) {
+      const r=s.slice(); r.splice(i,2);
+      if (canSets(r)) return true;
     }
   }
   return false;
 }
-function canFormSets(tiles) {
-  if (tiles.length === 0) return true;
-  const t = tiles[0];
-  const rest = tiles.slice(1);
-  // try pong
-  const i2 = rest.indexOf(t);
-  if (i2 !== -1) {
-    const r2 = rest.slice(); r2.splice(i2, 1);
-    const i3 = r2.indexOf(t);
-    if (i3 !== -1) {
-      const r3 = r2.slice(); r3.splice(i3, 1);
-      if (canFormSets(r3)) return true;
-    }
-  }
-  // try sequence
-  const suit = t.slice(-1);
-  const num  = parseInt(t);
-  if (!isNaN(num) && SUITS.includes(suit) && num <= 7) {
-    const t2 = (num+1)+suit, t3 = (num+2)+suit;
-    const idx2 = rest.indexOf(t2);
-    if (idx2 !== -1) {
-      const r2 = rest.slice(); r2.splice(idx2, 1);
-      const idx3 = r2.indexOf(t3);
-      if (idx3 !== -1) {
-        const r3 = r2.slice(); r3.splice(idx3, 1);
-        if (canFormSets(r3)) return true;
-      }
-    }
+function canSets(t) {
+  if (t.length===0) return true;
+  const h=t[0], rest=t.slice(1);
+  // triplet
+  const i2=rest.indexOf(h);
+  if(i2!==-1){ const r2=rest.slice(); r2.splice(i2,1); const i3=r2.indexOf(h); if(i3!==-1){ const r3=r2.slice(); r3.splice(i3,1); if(canSets(r3)) return true; } }
+  // sequence
+  const suit=h.slice(-1), num=parseInt(h);
+  if(!isNaN(num)&&SUITS.includes(suit)&&num<=7){
+    const t2=(num+1)+suit,t3=(num+2)+suit;
+    const j2=rest.indexOf(t2);
+    if(j2!==-1){ const r2=rest.slice(); r2.splice(j2,1); const j3=r2.indexOf(t3); if(j3!==-1){ const r3=r2.slice(); r3.splice(j3,1); if(canSets(r3)) return true; } }
   }
   return false;
 }
 
-// ─── Tenpai (聽牌) Detection ──────────────────────────────────
-// Returns array of tiles that would complete the hand
-function getTenpaiTiles(hand) {
-  const allTiles = new Set([
-    ...['m','p','s'].flatMap(s => Array.from({length:9},(_,i)=>(i+1)+s)),
-    ...HONORS
-  ]);
-  const waits = [];
-  for (const t of allTiles) {
-    if (isWinningHand([...hand, t])) waits.push(t);
-  }
-  return waits;
+// ─── Tenpai: what tiles complete the hand ─────────────────────
+function getTenpai(hand) {
+  const all=[...['m','p','s'].flatMap(s=>Array.from({length:9},(_,i)=>(i+1)+s)),...HONORS];
+  return [...new Set(all)].filter(t => isWinHand([...hand, t]));
 }
 
-// ─── Score Calculation (香港麻將) ─────────────────────────────
-function calcScore(hand, melds, winTile, isTsumo, isHK) {
-  // simplified fan counting
+// ─── Which discard gives best tenpai ──────────────────────────
+// Returns [{discard, waits:[]}]
+function getTenpaiAfterDiscard(hand) {
+  const result = [];
+  const seen = new Set();
+  hand.forEach(t => {
+    if (seen.has(t)) return;
+    seen.add(t);
+    const h2 = hand.slice();
+    h2.splice(h2.indexOf(t), 1);
+    const waits = getTenpai(h2);
+    if (waits.length > 0) result.push({ discard: t, waits });
+  });
+  return result;
+}
+
+// ─── Score (香港麻將 fan) ──────────────────────────────────────
+function calcFan(hand, melds, isTsumo, isHK) {
+  const all = [...hand, ...melds.flat()];
   let fan = 1;
-  const allTiles = [...hand, ...melds.flat(), winTile];
-  const honors   = allTiles.filter(t => HONORS.includes(t));
-  if (honors.length >= 12) fan += 2;          // 字一色
-  if (allTiles.every(t => !isNaN(parseInt(t)))) fan += 1; // 清一色 base
-  if (isTsumo) fan += 1;                       // 自摸加番
-  return isHK ? fan * 2 : fan;
+  if (isTsumo) fan += 1;
+  // All same suit bonus
+  const suits = new Set(all.map(t=>SUITS.includes(t.slice(-1))?t.slice(-1):'h').filter(s=>s!=='h'));
+  if (suits.size===1 && all.every(t=>!HONORS.includes(t))) fan += 3;
+  return isHK ? fan : fan;
 }
 
 // ─── Room ─────────────────────────────────────────────────────
 class Room {
   constructor(code, mode, hostId, hostName) {
     this.code       = code;
-    this.mode       = mode;           // '2p' | '4p'
-    this.isHK       = mode === '2p';  // 香港麻將 for 2-player
-    this.maxPlayers = mode === '2p' ? 2 : 4;
-    this.players    = [{
-      id: hostId, name: hostName, ws: null,
-      hand: [], melds: [], score: 1000, tenpai: false, tenpaiTiles: []
-    }];
-    this.deck        = [];
-    this.discard     = [];
-    this.currentTurn = 0;
-    this.phase       = 'waiting';     // waiting|playing|action|ended
-    this.lastDiscard = null;
-    this.lastDiscardFrom = -1;
-    this.round       = 0;             // 0=東1, 1=東2 …
-    this.actionTimer = null;
-    this.pendingActions = [];         // who can respond
-    this.responses   = {};            // playerIdx -> action chosen
+    this.mode       = mode;
+    this.isHK       = mode==='2p';
+    this.maxPlayers = mode==='2p'?2:4;
+    this.players    = [{id:hostId,name:hostName,ws:null,hand:[],melds:[],score:1000,tenpai:[]}];
+    this.deck=[]; this.discard=[]; this.currentTurn=0;
+    this.phase='waiting'; this.lastDiscard=null; this.lastDiscardFrom=-1;
+    this.pending=[]; this.responses={}; this.actionTimer=null;
   }
-
-  addPlayer(id, name, ws) {
-    if (this.players.length >= this.maxPlayers) return false;
-    this.players.push({ id, name, ws, hand: [], melds: [], score: 1000, tenpai: false, tenpaiTiles: [] });
+  addPlayer(id,name,ws){
+    if(this.players.length>=this.maxPlayers) return false;
+    this.players.push({id,name,ws,hand:[],melds:[],score:1000,tenpai:[]});
     return true;
   }
-
-  // ── Start ──────────────────────────────────────────────────
-  startGame() {
-    this.deck    = shuffle(buildDeck());
-    this.discard = [];
-    this.players.forEach(p => { p.hand = []; p.melds = []; p.tenpai = false; p.tenpaiTiles = []; });
-
-    // Deal 13 tiles each
-    const count = this.players.length;
-    for (let i = 0; i < 13; i++)
-      for (let j = 0; j < count; j++)
-        this.players[j].hand.push(this.deck.pop());
-
-    this.players.forEach(p => { p.hand = sortHand(p.hand); });
-    this.currentTurn = 0;
-    this.phase = 'playing';
-
-    this.broadcast({ type: 'game_start',
-      players: this.players.map(p => ({ id: p.id, name: p.name, score: p.score })),
-      round: this.round, isHK: this.isHK });
-
-    this.sendAllHands();
-    this.broadcastState();
-    this.doDrawTile(0);              // first player draws
+  start(){
+    this.deck=shuffle(buildDeck()); this.discard=[];
+    this.players.forEach(p=>{p.hand=[];p.melds=[];p.tenpai=[];});
+    for(let i=0;i<13;i++) this.players.forEach(p=>p.hand.push(this.deck.pop()));
+    this.players.forEach(p=>{ p.hand=sortHand(p.hand); });
+    this.currentTurn=0; this.phase='playing';
+    this.bcast({type:'game_start',players:this.players.map(p=>({id:p.id,name:p.name,score:p.score})),mode:this.mode,isHK:this.isHK});
+    this.sendAllHands(); this.bcastState(); this.draw(0);
   }
-
-  // ── Draw tile ──────────────────────────────────────────────
-  doDrawTile(idx) {
-    if (this.deck.length === 0) { this.endGame('draw'); return; }
-    const tile = this.deck.pop();
-    const p    = this.players[idx];
-    p.hand.push(tile);
-    p.hand = sortHand(p.hand);
-    this.currentTurn = idx;
-    this.phase = 'playing';
-
-    // Check tsumo (自摸)
-    const tsumo = isWinningHand(p.hand);
-    // Tenpai tiles
-    p.tenpaiTiles = getTenpaiTiles(p.hand.slice(0,-1)); // before this draw
-    p.tenpai = p.tenpaiTiles.length > 0;
-
-    // Tell the player their hand + drawn tile + if tsumo available
-    send(p.ws, { type: 'your_turn', hand: p.hand, drawn: tile,
-      canTsumo: tsumo, tenpaiTiles: p.tenpaiTiles });
-
-    this.broadcast({ type: 'turn_change', currentTurn: idx, deckLeft: this.deck.length });
-    this.broadcastState();
+  draw(idx){
+    if(this.deck.length===0){ this.end('draw'); return; }
+    const tile=this.deck.pop(), p=this.players[idx];
+    p.hand.push(tile); p.hand=sortHand(p.hand);
+    this.currentTurn=idx; this.phase='playing';
+    const tsumo=isWinHand(p.hand);
+    // tenpai suggestions: what to discard to be tenpai
+    const tenpaiSug=getTenpaiAfterDiscard(p.hand);
+    p.tenpai=tenpaiSug.flatMap(s=>s.waits);
+    wsSend(p.ws,{type:'your_turn',hand:p.hand,drawn:tile,canTsumo:tsumo,tenpaiSug});
+    this.bcast({type:'turn_change',currentTurn:idx,deckLeft:this.deck.length});
+    this.bcastState();
   }
-
-  // ── Discard ────────────────────────────────────────────────
-  doDiscard(playerIdx, tile) {
-    const p   = this.players[playerIdx];
-    const idx = p.hand.indexOf(tile);
-    if (idx === -1) return false;
-    p.hand.splice(idx, 1);
-    p.hand = sortHand(p.hand);
-    this.discard.push(tile);
-    this.lastDiscard     = tile;
-    this.lastDiscardFrom = playerIdx;
-
-    // Compute tenpai state after discard
-    p.tenpaiTiles = getTenpaiTiles(p.hand);
-    p.tenpai = p.tenpaiTiles.length > 0;
-
-    this.broadcast({ type: 'discard_tile', playerIdx, tile,
-      tenpai: p.tenpai, deckLeft: this.deck.length });
-
-    // ── Check who can react ──────────────────────────────────
-    this.pendingActions = [];
-    this.responses      = {};
-
-    this.players.forEach((q, i) => {
-      if (i === playerIdx) return;
-      const canWin  = isWinningHand([...q.hand, tile]);
-      const canPong = q.hand.filter(t => t === tile).length >= 2;
-      // Chow only for the next player (no chow in HK 2P basic mode)
-      const isNext  = !this.isHK && (i === (playerIdx + 1) % this.players.length);
-      const canChow = isNext && checkCanChow(q.hand, tile);
-      if (canWin || canPong || (canChow && !this.isHK)) {
-        this.pendingActions.push({ playerIdx: i, canWin, canPong, canChow });
-        send(q.ws, { type: 'action_prompt', tile, from: playerIdx,
-          canWin, canPong, canChow });
+  discard(pidx,tile){
+    const p=this.players[pidx];
+    const i=p.hand.indexOf(tile); if(i===-1) return false;
+    p.hand.splice(i,1); p.hand=sortHand(p.hand);
+    this.discard.push(tile); this.lastDiscard=tile; this.lastDiscardFrom=pidx;
+    const tenpaiSug=getTenpaiAfterDiscard(p.hand);
+    p.tenpai=tenpaiSug.flatMap(s=>s.waits);
+    this.bcast({type:'discard_tile',playerIdx:pidx,tile,deckLeft:this.deck.length,tenpai:p.tenpai.length>0});
+    // check actions
+    this.pending=[]; this.responses={};
+    this.players.forEach((q,i)=>{
+      if(i===pidx) return;
+      const cW=isWinHand([...q.hand,tile]);
+      const cP=q.hand.filter(t=>t===tile).length>=2;
+      const isNext=!this.isHK&&(i===(pidx+1)%this.players.length);
+      const cC=isNext&&canChow(q.hand,tile);
+      if(cW||cP||cC){
+        this.pending.push({pidx:i,cW,cP,cC});
+        wsSend(q.ws,{type:'action_prompt',tile,from:pidx,canWin:cW,canPong:cP,canChow:cC});
       }
     });
-
-    if (this.pendingActions.length === 0) {
-      this.nextTurn();
-    } else {
-      this.phase = 'action';
-      // Auto-pass after 8s
+    if(this.pending.length===0) this.nextTurn();
+    else{
+      this.phase='action';
       clearTimeout(this.actionTimer);
-      this.actionTimer = setTimeout(() => {
-        if (this.phase === 'action') this.nextTurn();
-      }, 8000);
+      this.actionTimer=setTimeout(()=>{ if(this.phase==='action') this.nextTurn(); },8000);
     }
-    this.broadcastState();
+    this.bcastState();
     return true;
   }
-
-  // ── Player responds to action prompt ──────────────────────
-  doAction(playerIdx, action, tiles) {
-    if (this.phase !== 'action') return;
-    this.responses[playerIdx] = { action, tiles };
-
-    // Check if everyone who can act has responded
-    const allResponded = this.pendingActions.every(a => this.responses[a.playerIdx]);
-    if (!allResponded) return;
-
+  action(pidx,action,tiles){
+    if(this.phase!=='action') return;
+    this.responses[pidx]={action,tiles};
+    if(!this.pending.every(a=>this.responses[a.pidx])) return;
     clearTimeout(this.actionTimer);
-
-    // Priority: win > pong > chow > pass
-    let winner = null, pongIdx = -1, chowIdx = -1;
-    for (const a of this.pendingActions) {
-      const r = this.responses[a.playerIdx];
-      if (!r) continue;
-      if (r.action === 'win')  { winner  = a.playerIdx; break; }
-      if (r.action === 'pong' && pongIdx === -1) pongIdx = a.playerIdx;
-      if (r.action === 'chow' && chowIdx === -1) chowIdx = a.playerIdx;
+    const tile=this.lastDiscard;
+    // priority: win > pong > chow
+    for(const a of this.pending){
+      const r=this.responses[a.pidx];
+      if(r.action==='win'){ const p=this.players[a.pidx]; p.hand.push(tile); this.discard.pop(); this.end('win',a.pidx,false); return; }
     }
-
-    const tile = this.lastDiscard;
-    if (winner !== null) {
-      const p = this.players[winner];
-      p.hand.push(tile);
-      this.discard.pop();
-      this.endGame('win', winner, false);
-      return;
+    for(const a of this.pending){
+      const r=this.responses[a.pidx];
+      if(r.action==='pong'){
+        const p=this.players[a.pidx]; let rm=0;
+        p.hand=p.hand.filter(t=>(t===tile&&rm<2)?(rm++,false):true);
+        p.melds.push([tile,tile,tile]); this.discard.pop();
+        this.currentTurn=a.pidx; this.phase='playing';
+        this.bcast({type:'meld_done',playerIdx:a.pidx,meld:[tile,tile,tile],meldType:'pong'});
+        this.sendHand(a.pidx);
+        wsSend(p.ws,{type:'your_turn',hand:p.hand,drawn:null,afterMeld:true,tenpaiSug:getTenpaiAfterDiscard(p.hand)});
+        this.bcastState(); return;
+      }
     }
-    if (pongIdx !== -1) {
-      const p = this.players[pongIdx];
-      // remove 2 from hand
-      let removed = 0;
-      p.hand = p.hand.filter(t => { if (t === tile && removed < 2) { removed++; return false; } return true; });
-      p.melds.push([tile, tile, tile]);
-      this.discard.pop();
-      this.currentTurn = pongIdx;
-      this.phase = 'playing';
-      this.broadcast({ type: 'meld_done', playerIdx: pongIdx, meld: [tile,tile,tile], meldType: 'pong' });
-      this.sendHand(pongIdx);
-      send(this.players[pongIdx].ws, { type: 'your_turn', hand: p.hand, drawn: null, afterMeld: true });
-      this.broadcastState();
-      return;
+    for(const a of this.pending){
+      const r=this.responses[a.pidx];
+      if(r.action==='chow'&&r.tiles&&r.tiles.length===2){
+        const p=this.players[a.pidx];
+        r.tiles.forEach(t=>{ const i=p.hand.indexOf(t); if(i!==-1) p.hand.splice(i,1); });
+        const meld=sortHand([...r.tiles,tile]);
+        p.melds.push(meld); this.discard.pop();
+        this.currentTurn=a.pidx; this.phase='playing';
+        this.bcast({type:'meld_done',playerIdx:a.pidx,meld,meldType:'chow'});
+        this.sendHand(a.pidx);
+        wsSend(p.ws,{type:'your_turn',hand:p.hand,drawn:null,afterMeld:true,tenpaiSug:getTenpaiAfterDiscard(p.hand)});
+        this.bcastState(); return;
+      }
     }
-    if (chowIdx !== -1 && this.responses[chowIdx].tiles) {
-      const p = this.players[chowIdx];
-      const usedTiles = this.responses[chowIdx].tiles; // 2 tiles from hand
-      usedTiles.forEach(t => {
-        const i = p.hand.indexOf(t);
-        if (i !== -1) p.hand.splice(i, 1);
-      });
-      const meld = [...usedTiles, tile].sort();
-      p.melds.push(meld);
-      this.discard.pop();
-      this.currentTurn = chowIdx;
-      this.phase = 'playing';
-      this.broadcast({ type: 'meld_done', playerIdx: chowIdx, meld, meldType: 'chow' });
-      this.sendHand(chowIdx);
-      send(this.players[chowIdx].ws, { type: 'your_turn', hand: p.hand, drawn: null, afterMeld: true });
-      this.broadcastState();
-      return;
-    }
-    // All passed
     this.nextTurn();
   }
-
-  // ── Tsumo (自摸) ───────────────────────────────────────────
-  doTsumo(playerIdx) {
-    if (this.phase !== 'playing') return;
-    if (this.currentTurn !== playerIdx) return;
-    const p = this.players[playerIdx];
-    if (isWinningHand(p.hand)) {
-      this.endGame('win', playerIdx, true);
+  tsumo(pidx){
+    if(this.phase!=='playing'||this.currentTurn!==pidx) return;
+    const p=this.players[pidx];
+    if(isWinHand(p.hand)) this.end('win',pidx,true);
+  }
+  nextTurn(){ this.phase='playing'; this.draw((this.currentTurn+1)%this.players.length); }
+  end(reason,winIdx,isTsumo=false){
+    this.phase='ended'; clearTimeout(this.actionTimer);
+    let scoreChange=0, fan=0;
+    if(reason==='win'&&winIdx!==undefined){
+      const p=this.players[winIdx];
+      fan=calcFan(p.hand,p.melds,isTsumo,this.isHK);
+      scoreChange=fan*100;
+      p.score+=scoreChange;
+      if(!isTsumo&&this.lastDiscardFrom!==-1) this.players[this.lastDiscardFrom].score-=scoreChange;
+      if(isTsumo) this.players.filter((_,i)=>i!==winIdx).forEach(q=>{ q.score-=Math.ceil(scoreChange/(this.players.length-1)); });
     }
-  }
-
-  nextTurn() {
-    this.phase = 'playing';
-    const next = (this.currentTurn + 1) % this.players.length;
-    this.doDrawTile(next);
-  }
-
-  // ── End Game ───────────────────────────────────────────────
-  endGame(reason, winnerIdx, isTsumo = false) {
-    this.phase = 'ended';
-    clearTimeout(this.actionTimer);
-    let scoreChange = 0;
-    if (reason === 'win') {
-      const p = this.players[winnerIdx];
-      const fan = calcScore(p.hand, p.melds, this.lastDiscard, isTsumo, this.isHK);
-      scoreChange = fan * 100;
-      p.score += scoreChange;
-      // deduct from others
-      const losers = isTsumo ? this.players.filter((_,i) => i !== winnerIdx) : [];
-      if (this.lastDiscardFrom !== -1 && !isTsumo) {
-        const loser = this.players[this.lastDiscardFrom];
-        if (loser) { loser.score -= scoreChange; }
+    this.bcast({type:'game_end',reason,winnerIdx:winIdx!==undefined?winIdx:-1,isTsumo,fan,scoreChange,
+      hands:this.players.map(p=>({id:p.id,name:p.name,hand:p.hand,melds:p.melds,score:p.score}))});
+    // Persist scores
+    const users=loadUsers();
+    this.players.forEach((p,i)=>{
+      if(users[p.id]){
+        users[p.id].games=(users[p.id].games||0)+1;
+        if(reason==='win'){
+          if(i===winIdx){ users[p.id].wins=(users[p.id].wins||0)+1; users[p.id].streak=(users[p.id].streak||0)+1; users[p.id].qi=(users[p.id].qi||1200)+scoreChange; }
+          else{ users[p.id].losses=(users[p.id].losses||0)+1; users[p.id].streak=0; users[p.id].qi=Math.max(0,(users[p.id].qi||1200)-Math.ceil(scoreChange/(this.players.length-1))); }
+        }
       }
-      losers.forEach(l => { l.score -= Math.ceil(scoreChange / (this.players.length - 1)); });
-    }
-    this.broadcast({
-      type: 'game_end', reason,
-      winnerIdx: winnerIdx !== undefined ? winnerIdx : -1,
-      isTsumo,
-      scoreChange,
-      hands: this.players.map(p => ({ id: p.id, name: p.name, hand: p.hand, melds: p.melds, score: p.score }))
     });
+    saveUsers(users);
   }
-
-  // ── Helpers ────────────────────────────────────────────────
-  sendAllHands() {
-    this.players.forEach((p, i) => this.sendHand(i));
+  sendAllHands(){ this.players.forEach((_,i)=>this.sendHand(i)); }
+  sendHand(i){ const p=this.players[i]; wsSend(p.ws,{type:'hand_update',hand:p.hand,playerIdx:i}); }
+  bcastState(){
+    this.bcast({type:'state_update',phase:this.phase,currentTurn:this.currentTurn,
+      deckLeft:this.deck.length,discard:this.discard,
+      players:this.players.map(p=>({id:p.id,name:p.name,score:p.score,handCount:p.hand.length,melds:p.melds,tenpai:p.tenpai.length>0}))});
   }
-  sendHand(idx) {
-    const p = this.players[idx];
-    send(p.ws, { type: 'hand_update', hand: p.hand, playerIdx: idx });
-  }
-  broadcastState() {
-    this.broadcast({
-      type: 'state_update',
-      phase: this.phase,
-      currentTurn: this.currentTurn,
-      deckLeft: this.deck.length,
-      discard: this.discard,
-      players: this.players.map(p => ({
-        id: p.id, name: p.name, score: p.score,
-        handCount: p.hand.length, melds: p.melds, tenpai: p.tenpai
-      }))
-    });
-  }
-  broadcast(obj) { broadcast(this.players, obj); }
+  bcast(obj){ bcast(this.players,obj); }
+}
+function canChow(hand,tile){
+  const suit=tile.slice(-1),num=parseInt(tile);
+  if(isNaN(num)||!SUITS.includes(suit)) return false;
+  const has=n=>hand.includes(n+suit);
+  return (has(num-2)&&has(num-1))||(has(num-1)&&has(num+1))||(has(num+1)&&has(num+2));
 }
 
-function checkCanChow(hand, tile) {
-  const suit = tile.slice(-1);
-  const num  = parseInt(tile);
-  if (isNaN(num) || !SUITS.includes(suit)) return false;
-  const has = n => hand.includes(n + suit);
-  return (has(num-2) && has(num-1)) || (has(num-1) && has(num+1)) || (has(num+1) && has(num+2));
+// ─── Matchmaking ──────────────────────────────────────────────
+const matchQueues = { '2p':[], '4p':[] }; // [{ws,playerId,name}]
+function tryMatch(mode){
+  const q=matchQueues[mode]; const need=mode==='2p'?2:4;
+  if(q.length<need) return;
+  const group=q.splice(0,need);
+  let code=genCode(); while(rooms.has(code)) code=genCode();
+  const room=new Room(code,mode,group[0].playerId,group[0].name);
+  room.players[0].ws=group[0].ws;
+  group.slice(1).forEach(p=>room.addPlayer(p.playerId,p.name,p.ws));
+  rooms.set(code,room);
+  group.forEach(p=>{ const ctx=clients.get(p.ws); if(ctx){ctx.playerId=p.playerId;ctx.roomCode=code;ctx.name=p.name;} });
+  room.bcast({type:'match_found',code,mode,players:room.players.map(p=>({id:p.id,name:p.name}))});
+  setTimeout(()=>room.start(),2000);
 }
 
 // ─── WebSocket ────────────────────────────────────────────────
-const rooms   = new Map();
-const clients = new Map(); // ws -> { playerId, roomCode, name }
-
-wss.on('connection', ws => {
-  clients.set(ws, { playerId: null, roomCode: null, name: null });
-
-  ws.on('message', raw => {
-    let msg; try { msg = JSON.parse(raw); } catch { return; }
-    const ctx = clients.get(ws);
-
-    switch (msg.type) {
-
-      case 'create_room': {
-        let code = genCode();
-        while (rooms.has(code)) code = genCode();
-        const room = new Room(code, msg.mode, msg.playerId, msg.name);
-        room.players[0].ws = ws;
-        rooms.set(code, room);
-        ctx.playerId = msg.playerId;
-        ctx.roomCode = code;
-        ctx.name     = msg.name;
-        send(ws, { type: 'room_created', code, mode: msg.mode,
-          players: [{ id: msg.playerId, name: msg.name }] });
+const rooms=new Map(), clients=new Map();
+wss.on('connection',ws=>{
+  clients.set(ws,{playerId:null,roomCode:null,name:null});
+  ws.on('message',raw=>{
+    let msg; try{ msg=JSON.parse(raw); }catch{ return; }
+    const ctx=clients.get(ws);
+    switch(msg.type){
+      case 'create_room':{
+        let code=genCode(); while(rooms.has(code)) code=genCode();
+        const room=new Room(code,msg.mode,msg.playerId,msg.name);
+        room.players[0].ws=ws; rooms.set(code,room);
+        ctx.playerId=msg.playerId; ctx.roomCode=code; ctx.name=msg.name;
+        wsSend(ws,{type:'room_created',code,mode:msg.mode,players:[{id:msg.playerId,name:msg.name}]});
         break;
       }
-
-      case 'join_room': {
-        const room = rooms.get(msg.code);
-        if (!room)                        { send(ws, { type: 'error', msg: '找不到此房間' }); return; }
-        if (room.players.length >= room.maxPlayers) { send(ws, { type: 'error', msg: '房間已滿' }); return; }
-        if (room.phase !== 'waiting')     { send(ws, { type: 'error', msg: '遊戲已開始' }); return; }
-        room.addPlayer(msg.playerId, msg.name, ws);
-        ctx.playerId = msg.playerId;
-        ctx.roomCode = msg.code;
-        ctx.name     = msg.name;
-        room.broadcast({ type: 'player_joined', name: msg.name,
-          players: room.players.map(p => ({ id: p.id, name: p.name })),
-          count: room.players.length, max: room.maxPlayers });
-        send(ws, { type: 'joined_room', code: msg.code, mode: room.mode,
-          players: room.players.map(p => ({ id: p.id, name: p.name })) });
+      case 'join_room':{
+        const room=rooms.get(msg.code);
+        if(!room){ wsSend(ws,{type:'error',msg:'找不到此房間'}); return; }
+        if(room.players.length>=room.maxPlayers){ wsSend(ws,{type:'error',msg:'房間已滿'}); return; }
+        if(room.phase!=='waiting'){ wsSend(ws,{type:'error',msg:'遊戲已開始'}); return; }
+        room.addPlayer(msg.playerId,msg.name,ws);
+        ctx.playerId=msg.playerId; ctx.roomCode=msg.code; ctx.name=msg.name;
+        room.bcast({type:'player_joined',name:msg.name,players:room.players.map(p=>({id:p.id,name:p.name})),count:room.players.length,max:room.maxPlayers});
+        wsSend(ws,{type:'joined_room',code:msg.code,mode:room.mode,players:room.players.map(p=>({id:p.id,name:p.name}))});
         break;
       }
-
-      case 'start_game': {
-        const room = rooms.get(ctx.roomCode);
-        if (!room) return;
-        if (room.players[0].id !== ctx.playerId) { send(ws, { type: 'error', msg: '只有房主能開始' }); return; }
-        if (room.players.length < 2)             { send(ws, { type: 'error', msg: `至少需要2位玩家` }); return; }
-        room.startGame();
-        break;
+      case 'start_game':{
+        const room=rooms.get(ctx.roomCode); if(!room) return;
+        if(room.players[0].id!==ctx.playerId){ wsSend(ws,{type:'error',msg:'只有房主能開始'}); return; }
+        if(room.players.length<2){ wsSend(ws,{type:'error',msg:'至少需要2位玩家'}); return; }
+        room.start(); break;
       }
-
-      case 'discard': {
-        const room = rooms.get(ctx.roomCode);
-        if (!room) return;
-        const idx = room.players.findIndex(p => p.id === ctx.playerId);
-        if (idx !== room.currentTurn || room.phase !== 'playing') return;
-        room.doDiscard(idx, msg.tile);
-        break;
+      case 'discard':{
+        const room=rooms.get(ctx.roomCode); if(!room) return;
+        const idx=room.players.findIndex(p=>p.id===ctx.playerId);
+        if(idx!==room.currentTurn||room.phase!=='playing') return;
+        room.discard(idx,msg.tile); break;
       }
-
-      case 'tsumo': {
-        const room = rooms.get(ctx.roomCode);
-        if (!room) return;
-        const idx = room.players.findIndex(p => p.id === ctx.playerId);
-        room.doTsumo(idx);
-        break;
+      case 'tsumo':{
+        const room=rooms.get(ctx.roomCode); if(!room) return;
+        const idx=room.players.findIndex(p=>p.id===ctx.playerId);
+        room.tsumo(idx); break;
       }
-
-      case 'action': {
-        const room = rooms.get(ctx.roomCode);
-        if (!room || room.phase !== 'action') return;
-        const idx = room.players.findIndex(p => p.id === ctx.playerId);
-        room.doAction(idx, msg.action, msg.tiles || []);
-        break;
+      case 'action':{
+        const room=rooms.get(ctx.roomCode); if(!room||room.phase!=='action') return;
+        const idx=room.players.findIndex(p=>p.id===ctx.playerId);
+        room.action(idx,msg.action,msg.tiles||[]); break;
       }
-
-      case 'restart': {
-        const room = rooms.get(ctx.roomCode);
-        if (!room) return;
-        if (room.players[0].id !== ctx.playerId) return;
-        room.phase = 'waiting';
-        room.startGame();
-        break;
+      case 'quick_match':{
+        const q=matchQueues[msg.mode];
+        if(q.find(x=>x.playerId===msg.playerId)) return;
+        q.push({ws,playerId:msg.playerId,name:msg.name});
+        ctx.playerId=msg.playerId; ctx.name=msg.name;
+        wsSend(ws,{type:'queue_status',mode:msg.mode,count:q.length,need:msg.mode==='2p'?2:4});
+        tryMatch(msg.mode); break;
+      }
+      case 'cancel_match':{
+        ['2p','4p'].forEach(m=>{ const i=matchQueues[m].findIndex(x=>x.playerId===ctx.playerId); if(i!==-1) matchQueues[m].splice(i,1); });
+        wsSend(ws,{type:'match_cancelled'}); break;
+      }
+      case 'restart':{
+        const room=rooms.get(ctx.roomCode); if(!room) return;
+        if(room.players[0].id!==ctx.playerId) return;
+        room.start(); break;
       }
     }
   });
-
-  ws.on('close', () => {
-    const ctx = clients.get(ws);
-    if (ctx?.roomCode) {
-      const room = rooms.get(ctx.roomCode);
-      if (room) {
-        room.broadcast({ type: 'player_left', name: ctx.name });
-        if (room.players.every(p => !p.ws || p.ws.readyState !== 1)) rooms.delete(ctx.roomCode);
-      }
-    }
+  ws.on('close',()=>{
+    const ctx=clients.get(ws);
+    if(ctx?.roomCode){ const room=rooms.get(ctx.roomCode); if(room){ room.bcast({type:'player_left',name:ctx.name}); if(room.players.every(p=>!p.ws||p.ws.readyState!==1)) rooms.delete(ctx.roomCode); } }
+    ['2p','4p'].forEach(m=>{ const i=matchQueues[m].findIndex(x=>x.ws===ws); if(i!==-1) matchQueues[m].splice(i,1); });
     clients.delete(ws);
   });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🀄 小麻將 http://localhost:${PORT}`));
+const PORT=process.env.PORT||3000;
+server.listen(PORT,()=>console.log(`🀄 小麻將 → http://localhost:${PORT}`));
