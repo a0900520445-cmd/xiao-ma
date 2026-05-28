@@ -11,7 +11,7 @@ const io = new Server(server, { cors: { origin: '*' } });
 app.use(express.static(path.join(__dirname, 'public')));
 
 const players = {};
-const rooms   = {};
+const rooms = new Map();
 const matchQueue = [];
 
 const CHAR_STATS = {
