@@ -1,4 +1,3 @@
-cat > /home/claude/server.js << 'EOF'
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
