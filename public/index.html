@@ -2,220 +2,193 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>小麻將 · Xiao Mahjong</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>小麻將</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<!-- ── Global BG ─────────────────────────────────────────── -->
+<!-- BG -->
 <div class="bg-layer bg-stars"></div>
-<div class="bg-layer bg-gradient"></div>
-<div class="bg-layer bg-glow-left"></div>
-<div class="bg-layer bg-glow-right"></div>
-<div class="bg-layer bg-pattern"></div>
+<div class="bg-layer bg-grad"></div>
+<div class="bg-layer bg-gl"></div>
+<div class="bg-layer bg-gr"></div>
+<div class="bg-layer bg-pat"></div>
 
-<!-- ── Connection Status ──────────────────────────────────── -->
-<div class="conn-status disconnected" id="conn-status">○ 連線中…</div>
-
-<!-- ── Toast ─────────────────────────────────────────────── -->
+<div class="conn-status err" id="conn-status">○ 連線中…</div>
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<!-- ════════════════════════════════════════════════════════
-     SCREEN 1: LOGIN
-     ════════════════════════════════════════════════════════ -->
+<!-- ══ LOGIN ══════════════════════════════════════════════════ -->
 <div class="screen active" id="screen-login">
-  <div class="login-hero">
-    <div class="login-tiles-deco">
-      <div class="deco-tile red-tile">中</div>
-      <div class="deco-tile black-tile">🀇</div>
-      <div class="deco-tile green-tile">發</div>
-      <div class="deco-tile black-tile">🀙</div>
-      <div class="deco-tile red-tile">東</div>
-    </div>
-    <div class="logo-title">小麻將</div>
-    <div class="logo-divider"></div>
-    <div class="logo-en">XIAO MAHJONG</div>
+  <div class="login-tiles">
+    <div class="deco-tile r">中</div>
+    <div class="deco-tile k">🀇</div>
+    <div class="deco-tile g">發</div>
+    <div class="deco-tile k">🀙</div>
+    <div class="deco-tile r">東</div>
   </div>
-
+  <div class="logo-wrap">
+    <div class="logo-main">小麻將</div>
+    <div class="logo-line"></div>
+    <div class="logo-en">XIAO MAHJONG · PREMIUM</div>
+  </div>
   <div class="login-card">
-    <div class="login-card-title">✦ 歡 迎 入 桌 ✦</div>
+    <div class="card-title">✦ 歡 迎 入 桌 ✦</div>
     <div class="form-group">
       <label class="form-label" for="login-name-input">玩家名稱</label>
-      <input class="form-input" id="login-name-input" type="text"
-             placeholder="請輸入您的名稱" maxlength="12" autocomplete="off">
+      <input class="form-input" id="login-name-input" type="text" placeholder="請輸入您的名稱" maxlength="12" autocomplete="off">
     </div>
-    <button class="btn-primary" id="login-btn">進 入 遊 戲</button>
+    <button class="btn-gold" id="login-btn">進 入 遊 戲</button>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════
-     SCREEN 2: MAIN LOBBY
-     ════════════════════════════════════════════════════════ -->
+<!-- ══ MAIN LOBBY ═════════════════════════════════════════════ -->
 <div class="screen" id="screen-main">
-  <!-- Top bar -->
-  <div class="main-topbar">
+  <div class="topbar">
     <div class="topbar-logo">小麻將</div>
-    <div class="topbar-right">
-      <div class="qi-coin">
-        <span class="qi-coin-icon">🪙</span>
-        <span class="qi-coin-amount qi-amount">1200</span>
-        <span class="qi-coin-label">琪幣</span>
-      </div>
-      <div class="player-avatar player-avatar-char">玩</div>
+    <div class="topbar-r">
+      <div class="qi-pill"><span class="qi-icon">🪙</span><span class="qi-val">1200</span><span class="qi-lbl">琪幣</span></div>
+      <div class="av player-av-char">玩</div>
     </div>
   </div>
-
-  <!-- Banner -->
   <div class="main-banner">
-    <div class="player-avatar" style="width:52px;height:52px;font-size:22px;" class="player-avatar-char">玩</div>
+    <div class="banner-av player-av-char" style="width:52px;height:52px;font-size:22px">玩</div>
     <div>
-      <div class="banner-greeting">歡迎回來</div>
+      <div class="banner-greet">歡迎回來</div>
       <div class="banner-name player-name-display">玩家</div>
-      <div class="banner-sub">今日已簽到 · 連勝 0 場</div>
+      <div class="banner-sub">今日已簽到・連線對局中</div>
     </div>
   </div>
-
-  <!-- Grid -->
   <div class="main-grid">
-    <!-- Friend Table - Full width, featured -->
-    <div class="game-card full card-friend" id="btn-go-friend">
+    <div class="gcard full jade" id="btn-go-friend">
       <div style="display:flex;align-items:center;gap:16px">
-        <div class="card-icon-wrap jade-bg">🀅</div>
-        <div>
-          <div class="card-name jade-text">好 友 桌</div>
-          <div class="card-desc">建立私人房間，邀請好友一同對局<br>支援二人麻將與四人普通麻將</div>
-        </div>
-        <div style="margin-left:auto;font-size:28px;opacity:0.3">›</div>
+        <div class="gcard-icon j">🀅</div>
+        <div><div class="gcard-name j">好 友 桌</div><div class="gcard-desc">建立私人房間，邀請好友一起對局</div></div>
+        <div style="margin-left:auto;font-size:30px;opacity:.25">›</div>
       </div>
     </div>
-
-    <!-- Quest -->
-    <div class="game-card" id="btn-go-quest">
-      <div class="card-ribbon">NEW</div>
-      <div class="card-icon-wrap">📋</div>
-      <div class="card-name">每日任務</div>
-      <div class="card-desc">完成任務領取琪幣獎勵</div>
+    <div class="gcard" id="btn-go-quick">
+      <div class="gcard-icon">⚡</div>
+      <div class="gcard-name">快速配對</div>
+      <div class="gcard-desc">系統自動配對玩家，即時開局</div>
     </div>
-
-    <!-- Quick Match -->
-    <div class="game-card" id="btn-quick-match">
-      <div class="card-icon-wrap">⚡</div>
-      <div class="card-name">快速對局</div>
-      <div class="card-desc">隨機匹配對手，即時開戰</div>
+    <div class="gcard" id="btn-go-quest">
+      <div class="ribbon">NEW</div>
+      <div class="gcard-icon">📋</div>
+      <div class="gcard-name">每日任務</div>
+      <div class="gcard-desc">完成任務領取琪幣獎勵</div>
     </div>
-
-    <!-- Leaderboard -->
-    <div class="game-card" id="btn-leaderboard">
-      <div class="card-icon-wrap">🏆</div>
-      <div class="card-name">排 行 榜</div>
-      <div class="card-desc">全服戰績排名</div>
+    <div class="gcard" id="btn-go-leader">
+      <div class="gcard-icon">🏆</div>
+      <div class="gcard-name">排 行 榜</div>
+      <div class="gcard-desc">全服勝場與琪幣排名</div>
     </div>
-
-    <!-- Replay -->
-    <div class="game-card" id="btn-replay">
-      <div class="card-icon-wrap">🎴</div>
-      <div class="card-name">牌局回放</div>
-      <div class="card-desc">回顧精彩對局過程</div>
+    <div class="gcard" id="btn-replay">
+      <div class="gcard-icon">🎴</div>
+      <div class="gcard-name">牌局回放</div>
+      <div class="gcard-desc">回顧精彩對局（即將上線）</div>
     </div>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════
-     SCREEN 3: QUEST
-     ════════════════════════════════════════════════════════ -->
+<!-- ══ QUICK MATCH ════════════════════════════════════════════ -->
+<div class="screen" id="screen-quick">
+  <div class="subhdr">
+    <button class="btn-ghost" data-back="screen-main">← 返回</button>
+    <div class="sub-title">⚡ 快速配對</div>
+  </div>
+  <div class="quick-body">
+    <div id="qm-mode-sel" style="width:100%;display:flex;flex-direction:column;gap:12px">
+      <div class="sec-card">
+        <div class="sec-lbl">選擇模式</div>
+        <div style="display:flex;gap:10px">
+          <button class="qm-mode-btn btn-ghost" data-mode="2p" style="flex:1;padding:16px;font-size:15px;letter-spacing:2px">二人麻將<br><small style="font-size:11px;opacity:.6">香港麻將</small></button>
+          <button class="qm-mode-btn btn-ghost" data-mode="4p" style="flex:1;padding:16px;font-size:15px;letter-spacing:2px">四人麻將<br><small style="font-size:11px;opacity:.6">普通規則</small></button>
+        </div>
+      </div>
+      <button class="btn-jade" id="qm-start-btn" disabled>開始配對</button>
+    </div>
+    <div id="queue-waiting" style="display:none;width:100%">
+      <div class="queue-status">
+        <div class="queue-spinner"></div>
+        <div class="queue-txt">配對中…</div>
+        <div class="queue-cnt" id="queue-count">等待玩家加入</div>
+      </div>
+      <button class="btn-ghost" id="qm-cancel-btn" style="width:100%;margin-top:12px;padding:12px;text-align:center">取消配對</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ QUEST ══════════════════════════════════════════════════ -->
 <div class="screen" id="screen-quest">
-  <div class="sub-header">
+  <div class="subhdr">
     <button class="btn-ghost" data-back="screen-main">← 返回</button>
     <div class="sub-title">🪙 每日任務</div>
-    <div style="margin-left:auto;font-size:12px;color:var(--text-dim)">
-      琪幣：<span class="qi-amount" style="color:var(--gold)">1200</span>
-    </div>
+    <div style="margin-left:auto;font-size:12px;color:var(--txt-d)">琪幣：<span class="qi-val" style="color:var(--gold)">1200</span></div>
   </div>
   <div class="quest-list" id="quest-list-body"></div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════
-     SCREEN 4: FRIEND ROOM
-     ════════════════════════════════════════════════════════ -->
+<!-- ══ LEADERBOARD ════════════════════════════════════════════ -->
+<div class="screen" id="screen-leader">
+  <div class="subhdr">
+    <button class="btn-ghost" data-back="screen-main">← 返回</button>
+    <div class="sub-title">🏆 排行榜</div>
+    <button class="btn-ghost" id="lb-refresh" style="margin-left:auto" onclick="loadLeaderboard()">重整</button>
+  </div>
+  <div class="lb-list" id="lb-list"></div>
+</div>
+
+<!-- ══ FRIEND ROOM ════════════════════════════════════════════ -->
 <div class="screen" id="screen-friend">
-  <div class="sub-header">
+  <div class="subhdr">
     <button class="btn-ghost" data-back="screen-main">← 返回</button>
     <div class="sub-title">🀅 好友桌</div>
   </div>
-
-  <div class="friend-body" style="overflow-y:auto;flex:1;width:100%;max-width:480px;margin:0 auto">
-
-    <!-- Mode Select -->
-    <div class="section-card">
-      <div class="section-label">選擇遊戲模式</div>
-      <div class="mode-options">
-        <div class="mode-option" id="opt-2p">
-          <input type="checkbox" class="mode-checkbox" id="mode-2p" value="2p">
-          <label for="mode-2p">二人麻將</label>
-          <span class="mode-badge">2人</span>
-        </div>
-        <div class="mode-option" id="opt-4p">
-          <input type="checkbox" class="mode-checkbox" id="mode-4p" value="4p">
-          <label for="mode-4p">普通麻將</label>
-          <span class="mode-badge">4人</span>
-        </div>
+  <div class="friend-body">
+    <div class="sec-card">
+      <div class="sec-lbl">選擇模式</div>
+      <div class="mode-opts">
+        <div class="mode-opt"><input type="checkbox" class="mode-checkbox" id="mode-2p" value="2p"><label for="mode-2p">二人麻將（香港規則）</label><span class="m-badge">2人</span></div>
+        <div class="mode-opt"><input type="checkbox" class="mode-checkbox" id="mode-4p" value="4p"><label for="mode-4p">普通麻將</label><span class="m-badge">4人</span></div>
       </div>
     </div>
-
-    <!-- Create room -->
-    <button class="btn-jade" id="create-room-btn" disabled>建立房間</button>
-
-    <!-- Room Code (shown after creation) -->
-    <div id="room-code-section" style="display:none">
-      <div class="room-code-box">
-        <div class="room-code-label">房間代碼</div>
-        <div class="room-code-value" id="room-code-display">----</div>
-        <div class="room-waiting">
-          等待好友加入
-          <div class="dots"><span></span><span></span><span></span></div>
-        </div>
+    <button class="btn-jade" id="create-room-btn" disabled>建 立 房 間</button>
+    <div id="room-code-section" style="display:none;display:flex;flex-direction:column;gap:12px">
+      <div class="code-box">
+        <div class="code-lbl">房間代碼</div>
+        <div class="code-val" id="room-code-display">----</div>
+        <div class="wait-row">等待好友加入 <div class="dots"><span></span><span></span><span></span></div></div>
       </div>
-
-      <div class="section-card" style="margin-top:12px">
-        <div class="section-label">房間成員</div>
-        <div class="player-slots" id="player-slots"></div>
+      <div class="sec-card">
+        <div class="sec-lbl">房間成員</div>
+        <div class="pslots" id="player-slots"></div>
       </div>
-
-      <button class="btn-red" id="host-start-btn" disabled style="margin-top:4px">
-        ✦ 開始對局 ✦
-      </button>
+      <button class="btn-red" id="host-start-btn" disabled>✦ 開 始 對 局 ✦</button>
     </div>
-
-    <!-- Join by code -->
-    <div class="divider-or">或輸入好友代碼加入</div>
+    <div class="div-or">或輸入好友代碼加入</div>
     <div class="join-row">
-      <input class="join-input" id="join-code-input" type="text"
-             maxlength="4" placeholder="輸入代碼" autocomplete="off">
+      <input class="join-inp" id="join-code-input" type="text" maxlength="4" placeholder="代碼" autocomplete="off">
       <button class="btn-join" id="join-btn">加入</button>
     </div>
-
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════
-     SCREEN 5: GAME
-     ════════════════════════════════════════════════════════ -->
+<!-- ══ GAME ════════════════════════════════════════════════════ -->
 <div class="screen" id="screen-game">
-  <div id="game-board" style="width:100%;height:100%;position:relative"></div>
+  <div class="game-wrap">
+    <div id="game-board" style="width:100%;height:100%;position:relative"></div>
+  </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════
-     OVERLAY: GAME OVER
-     ════════════════════════════════════════════════════════ -->
+<!-- ══ GAME OVER OVERLAY ══════════════════════════════════════ -->
 <div class="overlay" id="overlay-gameover">
-  <div class="modal win-modal">
-    <div class="modal-title" id="gameover-title">對局結束</div>
-    <div style="font-size:14px;color:var(--text-dim);text-align:center" id="gameover-sub"></div>
-    <div id="gameover-hands" style="margin:20px 0;max-height:160px;overflow-y:auto"></div>
+  <div class="modal" style="text-align:center">
+    <div class="modal-title" id="go-title">對局結束</div>
+    <div class="modal-sub" id="go-sub"></div>
+    <div class="modal-hands" id="go-hands"></div>
     <div class="modal-btns">
-      <button class="btn-jade" id="gameover-replay">再來一局</button>
-      <button class="btn-ghost" id="gameover-exit" style="width:100%;padding:12px;text-align:center">返回大廳</button>
+      <button class="btn-jade" id="go-replay">再來一局</button>
+      <button class="btn-ghost" id="go-exit" style="width:100%;padding:12px;text-align:center">返回大廳</button>
     </div>
   </div>
 </div>
