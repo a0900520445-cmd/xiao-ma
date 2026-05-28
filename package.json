@@ -1,12 +1,14 @@
 {
-  "name": "mahjong-server",
-  "version": "1.0.0",
+  "name": "xiao-mahjong",
+  "version": "2.0.0",
+  "description": "小麻將 - 精緻麻將遊戲",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "ws": "^8.18.0"
+    "ws": "^8.14.2"
   }
 }
