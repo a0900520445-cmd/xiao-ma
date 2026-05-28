@@ -266,5 +266,3 @@ function startBotLoop(roomId, botId, humanId) {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`🍋 水果大戰爭 http://localhost:${PORT}`));
-EOF
-echo "server.js done"
