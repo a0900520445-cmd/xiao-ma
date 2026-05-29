@@ -1,4 +1,3 @@
-cat > /home/claude/style.css << 'CSSEOF'
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@400;600;700;800&display=swap');
 
 :root {
@@ -298,5 +297,3 @@ body::before{
   .skill-btn{width:70px;height:70px}
   .skill-icon{font-size:1.5rem}
 }
-CSSEOF
-echo "style.css done"
