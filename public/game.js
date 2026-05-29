@@ -1,4 +1,3 @@
-cat > /home/claude/game.js << 'JSEOF'
 // ═══════════════════════════════════════════════════════
 //  水果大戰爭 — game.js
 // ═══════════════════════════════════════════════════════
@@ -587,5 +586,3 @@ function startMulti() {
   G.mode='multi'; startQueueScreen('多人配對大廳','尋找對手中...');
   socket.emit('joinMultiQueue',{character:G.character});
 }
-JSEOF
-echo "game.js done - $(wc -l < /home/claude/game.js) lines"
