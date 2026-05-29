@@ -1,5 +1,3 @@
-# Fix server.js - remove any echo issues and ensure robust room handling
-cat > /home/claude/server.js << 'EOF'
 const express = require('express');
 const http    = require('http');
 const { Server } = require('socket.io');
@@ -10,7 +8,7 @@ const app    = express();
 const server = http.createServer(app);
 const io     = new Server(server, { cors: { origin: '*' } });
 
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 
 const players    = {};   // socketId  -> player
@@ -310,5 +308,3 @@ io.on('connection', socket => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log('🍋 水果大戰爭 http://localhost:' + PORT));
-EOF
-echo "server.js done"
