@@ -17,13 +17,14 @@ const pool = new Pool({
   }
 });
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    role TEXT DEFAULT 'admin'
-  );
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS announcements (
+    id SERIAL PRIMARY KEY,
+    title TEXT,
+    content TEXT,
+    date DATE
+  )
+`)
 
   CREATE TABLE IF NOT EXISTS announcements (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,11 +50,21 @@ db.exec(`
 `);
 
 // 預設帳號（admin/admin123）
-const bcrypt = require('bcryptjs');
-const existingUser = db.prepare('SELECT id FROM users WHERE username = ?').get('admin');
-if (!existingUser) {
-  const hash = bcrypt.hashSync('admin123', 10);
-  db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run('admin', hash);
+import bcrypt from 'bcryptjs'
+
+// 查使用者
+const existingUser = await pool.query(
+  'SELECT id FROM users WHERE username = $1',
+  ['admin']
+)
+
+if (existingUser.rows.length === 0) {
+  const hash = bcrypt.hashSync('admin123', 10)
+
+  await pool.query(
+    'INSERT INTO users (username, password) VALUES ($1, $2)',
+    ['admin', hash]
+  )
 }
 
 // 預設站台設定
@@ -64,13 +75,26 @@ const defaultSettings = [
   ['site_phone', '(04) 1234-5678'],
   ['site_email', 'info@yuanpark.edu.tw'],
 ];
-const insertSetting = db.prepare('INSERT OR IGNORE INTO site_settings (key, value) VALUES (?, ?)');
-defaultSettings.forEach(([k, v]) => insertSetting.run(k, v));
+for (const [k, v] of defaultSettings) {
+  await pool.query(
+    `INSERT INTO site_settings (key, value)
+     VALUES ($1, $2)
+     ON CONFLICT (key) DO NOTHING`,
+    [k, v]
+  )
+}
 
 // 預設選單
-const navCount = db.prepare('SELECT COUNT(*) as cnt FROM nav_buttons').get();
-if (navCount.cnt === 0) {
-  const insertNav = db.prepare('INSERT INTO nav_buttons (name, url, parent_id, sort_order, target) VALUES (?, ?, ?, ?, ?)');
+const navCountResult = await pool.query(
+  'SELECT COUNT(*) as cnt FROM nav_buttons'
+);
+
+if (parseInt(navCountResult.rows[0].cnt) === 0) {
+await pool.query(
+  `INSERT INTO nav_buttons (name, url, parent_id, sort_order, target)
+   VALUES ($1, $2, $3, $4, $5)`,
+  [name, url, parent_id, sort_order, target]
+);
   insertNav.run('首頁', '/', null, 0, '_self');
   insertNav.run('認識校園', '/campus', null, 1, '_self');
   insertNav.run('最新消息', '/news', null, 2, '_self');
@@ -78,7 +102,11 @@ if (navCount.cnt === 0) {
 }
 
 // 預設公告
-const annCount = db.prepare('SELECT COUNT(*) as cnt FROM announcements').get();
+const annCountResult = await pool.query(
+  'SELECT COUNT(*) as cnt FROM announcements'
+);
+
+const annCount = parseInt(annCountResult.rows[0].cnt);
 if (annCount.cnt === 0) {
   const insertAnn = await pool.query('INSERT INTO announcements(title,content,date) VALUES ($1,$2,$3)',)
   insertAnn('歡迎來到御園國小官方網站', '本校官方網站正式上線，歡迎各位家長及同學蒞臨參觀。', '2026-06-08');
