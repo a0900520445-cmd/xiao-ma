@@ -1,11 +1,13 @@
-const express = require('express');
-const session = require('express-session');
-const bodyParser = require('body-parser');
-const path = require('path');
-const { Pool } = require('pg');
+import express from 'express'
+import session from 'express-session'
+import bodyParser from 'body-parser'
+import path from 'path'
+import pg from 'pg'
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const { Pool } = pg
+
+const app = express()
+const PORT = process.env.PORT || 3000
 
 // ── 初始化資料庫 ──────────────────────────────────────────
 const pool = new Pool({
