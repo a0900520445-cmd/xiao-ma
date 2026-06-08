@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 3000
 app.use(express.json());
 
 app.post('/nav_buttons', async (req, res) => {
+
   const { name, url, parent_id, sort_order, target } = req.body;
 
   try {
@@ -22,6 +23,7 @@ app.post('/nav_buttons', async (req, res) => {
     );
 
     res.send('ok');
+
   } catch (err) {
     console.error(err);
     res.status(500).send('error');
