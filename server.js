@@ -18,6 +18,7 @@ const pool = new Pool({
 });
 
 await pool.query(`
+  await pool.query(`
   CREATE TABLE IF NOT EXISTS announcements (
     id SERIAL PRIMARY KEY,
     title TEXT,
