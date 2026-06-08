@@ -26,30 +26,6 @@ const pool = new Pool({
     date DATE
   )
 `)
-  
-  CREATE TABLE IF NOT EXISTS announcements (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    date TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS nav_buttons (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    url TEXT NOT NULL,
-    parent_id INTEGER DEFAULT NULL,
-    sort_order INTEGER DEFAULT 0,
-    target TEXT DEFAULT '_self'
-  );
-
-  CREATE TABLE IF NOT EXISTS site_settings (
-    key TEXT PRIMARY KEY,
-    value TEXT
-  );
-`);
-
 // 預設帳號（admin/admin123）
 import bcrypt from 'bcryptjs'
 
