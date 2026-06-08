@@ -9,6 +9,24 @@ const { Pool } = pg
 const app = express()
 const PORT = process.env.PORT || 3000
 
+app.use(express.json());
+
+app.post('/nav_buttons', async (req, res) => {
+  const { name, url, parent_id, sort_order, target } = req.body;
+
+  try {
+    await pool.query(
+      `INSERT INTO nav_buttons (name, url, parent_id, sort_order, target)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [name, url, parent_id, sort_order, target]
+    );
+
+    res.send('ok');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('error');
+  }
+});
 // ── 初始化資料庫 ──────────────────────────────────────────
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -70,7 +88,7 @@ if (parseInt(navCountResult.rows[0].cnt) === 0) {
 await pool.query(
   `INSERT INTO nav_buttons (name, url, parent_id, sort_order, target)
    VALUES ($1, $2, $3, $4, $5)`,
-  [name, url, parent_id, sort_order, target]
+ const { name, url, parent_id, sort_order, target } = req.body;
 );
   insertNav.run('首頁', '/', null, 0, '_self');
   insertNav.run('認識校園', '/campus', null, 1, '_self');
