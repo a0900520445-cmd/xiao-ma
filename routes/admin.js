@@ -128,4 +128,4 @@ router.post('/change-password', requireAuth, (req, res) => {
   res.json({ success: true });
 });
 
-module.exports = router;
+export default router;
