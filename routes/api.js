@@ -20,18 +20,19 @@ router.get('/nav-buttons', async (req, res) => {
   }
 });
 // nav buttons
-catch (err) {
-  console.error(err); // ⭐一定要
-  res.status(500).json({ success: false, error: err.message });
-}
+router.get('/nav-buttons', async (req, res) => {
+  try {
+    const db = req.app.locals.pool;
+
     const result = await db.query(
       'SELECT * FROM nav_buttons ORDER BY parent_id ASC, sort_order ASC'
     );
 
     res.json({ success: true, data: result.rows });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
