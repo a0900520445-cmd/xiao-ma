@@ -1,6 +1,7 @@
 {
   "name": "school-website",
   "version": "1.0.0",
+  "type":"module",
   "description": "御園國小官方網站",
   "main": "server.js",
   "scripts": {
