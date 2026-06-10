@@ -111,11 +111,7 @@ if (parseInt(navCountResult.rows[0].cnt) === 0) {
      VALUES ($1, $2, $3, $4, $5)`,
     ['聯絡我們', '/contact', null, 3, '_self']
   );
-}
-  insertNav.run('首頁', '/', null, 0, '_self');
-  insertNav.run('認識校園', '/campus', null, 1, '_self');
-  insertNav.run('最新消息', '/news', null, 2, '_self');
-  insertNav.run('聯絡我們', '/contact', null, 3, '_self');
+
 }
 
 // 預設公告
