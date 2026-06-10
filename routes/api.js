@@ -8,16 +8,16 @@ router.get('/announcements', async (req, res) => {
     const db = req.app.locals.pool;
 
     const result = await db.query(
-      'SELECT * FROM announcements ORDER BY date DESC, id DESC'
+      'SELECT * FROM announcements ORDER BY date DESC'
     );
 
     res.json({ success: true, data: result.rows });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
-
 // nav buttons
 catch (err) {
   console.error(err); // ⭐一定要
