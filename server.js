@@ -3,12 +3,18 @@ import session from 'express-session'
 import bodyParser from 'body-parser'
 import path from 'path'
 import pg from 'pg'
-import { fileURLToPath } from 'url';
+import bcrypt from 'bcryptjs'
+import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const { Pool } = pg
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+})
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -42,14 +48,18 @@ const pool = new Pool({
 });
 
 
-  await pool.query(`
-  CREATE TABLE IF NOT EXISTS announcements (
-    id SERIAL PRIMARY KEY,
-    title TEXT,
-    content TEXT,
-    date DATE
-  )
-`)
+  async function initDB() {
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS announcements (
+      id SERIAL PRIMARY KEY,
+      title TEXT,
+      content TEXT,
+      date DATE
+    )`)
+  } catch (err) {
+    console.error(err)
+  }
+}
 // 預設帳號（admin/admin123）
 import bcrypt from 'bcryptjs'
 
