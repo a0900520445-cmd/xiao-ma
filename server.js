@@ -87,11 +87,31 @@ const navCountResult = await pool.query(
 );
 
 if (parseInt(navCountResult.rows[0].cnt) === 0) {
-await pool.query(
-  `INSERT INTO nav_buttons (name, url, parent_id, sort_order, target)
-   VALUES ($1, $2, $3, $4, $5)`,
- const { name, url, parent_id, sort_order, target } = req.body;
-);
+
+  await pool.query(
+    `INSERT INTO nav_buttons (name, url, parent_id, sort_order, target)
+     VALUES ($1, $2, $3, $4, $5)`,
+    ['首頁', '/', null, 0, '_self']
+  );
+
+  await pool.query(
+    `INSERT INTO nav_buttons (name, url, parent_id, sort_order, target)
+     VALUES ($1, $2, $3, $4, $5)`,
+    ['認識校園', '/campus', null, 1, '_self']
+  );
+
+  await pool.query(
+    `INSERT INTO nav_buttons (name, url, parent_id, sort_order, target)
+     VALUES ($1, $2, $3, $4, $5)`,
+    ['最新消息', '/news', null, 2, '_self']
+  );
+
+  await pool.query(
+    `INSERT INTO nav_buttons (name, url, parent_id, sort_order, target)
+     VALUES ($1, $2, $3, $4, $5)`,
+    ['聯絡我們', '/contact', null, 3, '_self']
+  );
+}
   insertNav.run('首頁', '/', null, 0, '_self');
   insertNav.run('認識校園', '/campus', null, 1, '_self');
   insertNav.run('最新消息', '/news', null, 2, '_self');
@@ -104,15 +124,22 @@ const annCountResult = await pool.query(
 );
 
 const annCount = parseInt(annCountResult.rows[0].cnt);
-if (annCount.cnt === 0) {
-  const insertAnn = await pool.query('INSERT INTO announcements(title,content,date) VALUES ($1,$2,$3)',)
-  insertAnn('歡迎來到御園國小官方網站', '本校官方網站正式上線，歡迎各位家長及同學蒞臨參觀。', '2026-06-08');
-  insertAnn('暑假營隊報名開始', '2026年暑期多元學習營隊即日起開放報名，名額有限請盡早報名。', '2026-06-05');
-  insertAnn('期末成績查詢系統開放', '113學年度第二學期期末成績查詢系統即日起開放，請同學登入查詢。', '2026-06-01');
-}
 
-// 將 db 掛在 app 上，讓 routes 使用
-app.locals.db = db;
+if (annCount === 0) {
+  await pool.query(
+  'INSERT INTO announcements(title,content,date) VALUES ($1,$2,$3)',
+  ['歡迎來到御園國小官方網站', '本校官方網站正式上線，歡迎各位家長及同學蒞臨參觀。', '2026-06-08']
+);
+
+await pool.query(
+  'INSERT INTO announcements(title,content,date) VALUES ($1,$2,$3)',
+  ['暑假營隊報名開始', '2026年暑期多元學習營隊即日起開放報名，名額有限請盡早報名。', '2026-06-05']
+);
+
+await pool.query(
+  'INSERT INTO announcements(title,content,date) VALUES ($1,$2,$3)',
+  ['期末成績查詢系統開放', '113學年度第二學期期末成績查詢系統即日起開放，請同學登入查詢。', '2026-06-01']
+);
 
 // ── Middleware ─────────────────────────────────────────────
 app.use(bodyParser.json());
