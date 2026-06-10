@@ -174,7 +174,7 @@ app.listen(PORT, async () => {
   console.log(`\n🏫 御園國小網站已啟動！`)
   console.log(`🌐 前台：http://localhost:${PORT}`)
   console.log(`🔐 後台：http://localhost:${PORT}/admin/dashboard.html`)
-  console.log(`👤 預設帳號：admin / admin123\n`)
+  console.log(`👤 預設帳號：reqier / reqier\n`)
 
   await initDB()
 })
