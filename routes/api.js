@@ -24,4 +24,4 @@ router.get('/settings', (req, res) => {
   res.json({ success: true, data: settings });
 });
 
-module.exports = router;
+export default router;
