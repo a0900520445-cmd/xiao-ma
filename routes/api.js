@@ -3,12 +3,13 @@ import express from 'express';
 const router = express.Router();
 
 // 公告
-router.get('/announcements', async (req, res) => {
+// nav buttons
+router.get('/nav-buttons', async (req, res) => {
   try {
     const db = req.app.locals.pool;
 
     const result = await db.query(
-      'SELECT * FROM announcements ORDER BY date DESC'
+      'SELECT * FROM nav_buttons ORDER BY parent_id ASC, sort_order ASC'
     );
 
     res.json({ success: true, data: result.rows });
