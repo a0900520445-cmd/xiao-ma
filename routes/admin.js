@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import bcrypt from 'bcryptjs';
+
 const router = express.Router();
-const bcrypt = require('bcryptjs');
 
 // ── Auth middleware ───────────────────────────────────────
 function requireAuth(req, res, next) {
