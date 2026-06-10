@@ -1,27 +1,54 @@
 import express from 'express';
 
 const router = express.Router();
-// 公開：取得公告
-router.get('/announcements', (req, res) => {
-  const db = req.app.locals.db;
-  const rows = db.prepare('SELECT * FROM announcements ORDER BY date DESC, id DESC').all();
-  res.json({ success: true, data: rows });
+
+// 公告
+router.get('/announcements', async (req, res) => {
+  try {
+    const db = req.app.locals.pool;
+
+    const result = await db.query(
+      'SELECT * FROM announcements ORDER BY date DESC, id DESC'
+    );
+
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
 });
 
-// 公開：取得導覽按鈕
-router.get('/nav-buttons', (req, res) => {
-  const db = req.app.locals.db;
-  const rows = db.prepare('SELECT * FROM nav_buttons ORDER BY parent_id ASC, sort_order ASC').all();
-  res.json({ success: true, data: rows });
+// nav buttons
+router.get('/nav-buttons', async (req, res) => {
+  try {
+    const db = req.app.locals.pool;
+
+    const result = await db.query(
+      'SELECT * FROM nav_buttons ORDER BY parent_id ASC, sort_order ASC'
+    );
+
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
 });
 
-// 公開：取得網站設定
-router.get('/settings', (req, res) => {
-  const db = req.app.locals.db;
-  const rows = db.prepare('SELECT * FROM site_settings').all();
-  const settings = {};
-  rows.forEach(r => settings[r.key] = r.value);
-  res.json({ success: true, data: settings });
+// settings
+router.get('/settings', async (req, res) => {
+  try {
+    const db = req.app.locals.pool;
+
+    const result = await db.query('SELECT * FROM site_settings');
+
+    const settings = {};
+    result.rows.forEach(r => settings[r.key] = r.value);
+
+    res.json({ success: true, data: settings });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
 });
 
 export default router;
