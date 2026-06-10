@@ -54,8 +54,6 @@ const pool = new Pool({
     console.error(err)
   }
 }
-// 預設帳號（admin/admin123）
-import bcrypt from 'bcryptjs'
 
 // 查使用者
 const existingUser = await pool.query(
