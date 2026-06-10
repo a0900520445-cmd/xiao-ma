@@ -1,6 +1,6 @@
-const express = require('express');
-const router = express.Router();
+import express from 'express';
 
+const router = express.Router();
 // 公開：取得公告
 router.get('/announcements', (req, res) => {
   const db = req.app.locals.db;
