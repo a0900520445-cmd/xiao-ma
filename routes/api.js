@@ -19,10 +19,10 @@ router.get('/announcements', async (req, res) => {
 });
 
 // nav buttons
-router.get('/nav-buttons', async (req, res) => {
-  try {
-    const db = req.app.locals.pool;
-
+catch (err) {
+  console.error(err); // ⭐一定要
+  res.status(500).json({ success: false, error: err.message });
+}
     const result = await db.query(
       'SELECT * FROM nav_buttons ORDER BY parent_id ASC, sort_order ASC'
     );
