@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>御園國小 - 後台管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green-dark:#1a5c3a;--green-mid:#2e8b57;--green-light:#4caf50;
+      --green-pale:#e8f5e9;--gold:#f5b400;--sidebar-bg:#0f3d26;
+      --white:#fff;--gray-bg:#f4f7f5;--text-dark:#1a2b1f;--text-light:#6b8f71;
+      --radius:10px;--font-title:'Noto Serif TC',serif;--font-body:'Noto Sans TC',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-body);background:var(--gray-bg);color:var(--text-dark);display:flex;min-height:100vh;}
+    /* Sidebar */
+    .sidebar{width:240px;background:var(--sidebar-bg);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:50;overflow-y:auto;}
+    .sidebar-logo{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px;}
+    .sidebar-icon{width:40px;height:40px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-title);font-weight:900;color:var(--sidebar-bg);font-size:18px;flex-shrink:0;}
+    .sidebar-logo-text h2{font-family:var(--font-title);font-size:.95rem;font-weight:700;}
+    .sidebar-logo-text p{font-size:.68rem;opacity:.6;}
+    .sidebar-nav{flex:1;padding:10px 0;}
+    .sidebar-section-label{font-size:.65rem;letter-spacing:2px;opacity:.4;text-transform:uppercase;padding:14px 16px 4px;}
+    .sidebar-link{display:flex;align-items:center;gap:8px;padding:10px 16px;cursor:pointer;transition:all .15s;color:rgba(255,255,255,.75);font-size:.88rem;border-left:3px solid transparent;}
+    .sidebar-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .sidebar-link.active{background:rgba(255,255,255,.12);color:var(--gold);border-left-color:var(--gold);}
+    .sidebar-link .icon{font-size:1rem;width:22px;text-align:center;}
+    .sidebar-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.1);}
+    .user-badge{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+    .avatar{width:30px;height:30px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;color:var(--sidebar-bg);font-weight:700;font-size:.85rem;}
+    .btn-logout{width:100%;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);padding:7px;border-radius:6px;cursor:pointer;font-size:.8rem;transition:all .2s;}
+    .btn-logout:hover{background:rgba(255,80,80,.25);color:#ff8a80;}
+    /* Main */
+    .main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+    .topbar{background:var(--white);border-bottom:1px solid #e0e8e2;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+    .page-title{font-family:var(--font-title);font-size:1.2rem;color:var(--green-dark);}
+    .breadcrumb{font-size:.8rem;color:var(--text-light);}
+    .content{padding:24px 28px;flex:1;}
+    /* Tabs */
+    .page-tab{display:none;}.page-tab.active{display:block;}
+    /* Stats */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;}
+    .stat-card{background:var(--white);border-radius:var(--radius);padding:20px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+    .stat-icon{font-size:1.8rem;}.stat-num{font-size:1.6rem;font-weight:700;color:var(--green-dark);font-family:var(--font-title);}.stat-label{font-size:.78rem;color:var(--text-light);}
+    /* Panel */
+    .panel{background:var(--white);border-radius:var(--radius);box-shadow:0 2px 12px rgba(0,0,0,.06);margin-bottom:20px;}
+    .panel-header{padding:16px 20px;border-bottom:1px solid #e8ede9;display:flex;align-items:center;justify-content:space-between;}
+    .panel-title{font-family:var(--font-title);font-size:1rem;color:var(--green-dark);}
+    .panel-body{padding:20px;}
+    /* Table */
+    .data-table{width:100%;border-collapse:collapse;font-size:.88rem;}
+    .data-table th{text-align:left;padding:9px 12px;background:var(--gray-bg);color:var(--text-light);font-weight:600;font-size:.78rem;text-transform:uppercase;}
+    .data-table td{padding:11px 12px;border-bottom:1px solid #eef1ee;vertical-align:middle;}
+    .data-table tr:last-child td{border-bottom:none;}
+    .data-table tr:hover td{background:#f8fbf8;}
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer;border:none;transition:all .18s;}
+    .btn-green{background:var(--green-dark);color:#fff;}.btn-green:hover{background:var(--green-mid);}
+    .btn-gold{background:var(--gold);color:var(--green-dark);}.btn-gold:hover{background:#e6a800;}
+    .btn-red{background:#ffebee;color:#c62828;border:1px solid #ffcdd2;}.btn-red:hover{background:#ffcdd2;}
+    .btn-blue{background:#e3f2fd;color:#1565c0;border:1px solid #bbdefb;}.btn-blue:hover{background:#bbdefb;}
+    .btn-sm{padding:4px 10px;font-size:.78rem;}
+    /* Form */
+    .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px;}
+    .form-group{display:flex;flex-direction:column;gap:5px;}
+    .form-group label{font-size:.82rem;font-weight:600;color:var(--text-dark);}
+    .form-group input,.form-group textarea,.form-group select{padding:9px 12px;border:1.5px solid #d0dbd2;border-radius:7px;font-size:.88rem;font-family:var(--font-body);outline:none;transition:border-color .2s;}
+    .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--green-mid);}
+    .form-group textarea{resize:vertical;min-height:72px;}
+    .form-actions{display:flex;gap:8px;margin-top:6px;}
+    /* Badge */
+    .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;}
+    .badge-green{background:var(--green-pale);color:var(--green-dark);}
+    .badge-gold{background:#fff8e1;color:#e65100;}
+    /* Alert */
+    .alert{padding:10px 14px;border-radius:7px;font-size:.85rem;margin-bottom:14px;display:none;}
+    .alert.show{display:block;}
+    .alert-success{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;}
+    .alert-error{background:#ffebee;color:#c62828;border:1px solid #ffcdd2;}
+    /* Modal */
+    .m-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;}
+    .m-overlay.open{display:flex;}
+    .m-box{background:#fff;border-radius:14px;padding:28px 24px;width:100%;max-width:520px;box-shadow:0 16px 48px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;}
+    .m-title{font-family:var(--font-title);font-size:1.1rem;color:var(--green-dark);margin-bottom:16px;}
+    .m-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+    .empty-state{text-align:center;padding:32px;color:var(--text-light);}
+    /* Image preview */
+    .img-preview{margin-top:8px;max-width:200px;max-height:160px;border-radius:8px;display:none;}
+    .img-preview.show{display:block;}
+    .img-current{margin-top:6px;font-size:.78rem;color:var(--text-light);}
+    .img-current img{max-width:120px;max-height:80px;border-radius:6px;margin-top:4px;display:block;}
+    /* Dept badge */
+    .dept-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700;background:var(--green-pale);color:var(--green-dark);}
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-icon">御</div>
+    <div class="sidebar-logo-text">
+      <h2>御園國小</h2>
+      <p>後台管理系統</p>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">主要功能</div>
+    <div class="sidebar-link active" onclick="showTab('dashboard',this)"><span class="icon">🏠</span> 控制台首頁</div>
+    <div class="sidebar-link" onclick="showTab('announcements',this)"><span class="icon">📢</span> 公告管理</div>
+    <div class="sidebar-link" onclick="showTab('nav',this)"><span class="icon">🔗</span> 選單按鈕</div>
+    <div class="sidebar-link" onclick="showTab('campus',this)"><span class="icon">🏫</span> 認識校園</div>
+    <div class="sidebar-section-label">系統設定</div>
+    <div class="sidebar-link" onclick="showTab('settings',this)"><span class="icon">⚙️</span> 網站設定</div>
+    <div class="sidebar-link" onclick="showTab('password',this)"><span class="icon">🔑</span> 修改密碼</div>
+    <div class="sidebar-link" onclick="window.open('/','_blank')"><span class="icon">🌐</span> 前台首頁</div>
+    <div class="sidebar-link" onclick="window.open('/news.html','_blank')"><span class="icon">📋</span> 最新消息頁</div>
+    <div class="sidebar-link" onclick="window.open('/campus.html','_blank')"><span class="icon">🌿</span> 認識校園頁</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-badge">
+      <div class="avatar" id="sidebar-avatar">A</div>
+      <div>
+        <div id="sidebar-username" style="font-size:.82rem;color:#fff;">admin</div>
+        <div style="font-size:.68rem;opacity:.5;">系統管理員</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">⬅ 登出</button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="page-title">🏠 控制台首頁</div>
+      <div class="breadcrumb">御園國小後台 › <span id="breadcrumb-sub">首頁</span></div>
+    </div>
+    <div style="font-size:.82rem;color:var(--text-light);" id="topbar-time"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── Dashboard ── -->
+    <div class="page-tab active" id="tab-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">📢</div><div><div class="stat-num" id="stat-ann">—</div><div class="stat-label">公告數量</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🔗</div><div><div class="stat-num" id="stat-nav">—</div><div class="stat-label">選單按鈕</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🏫</div><div><div class="stat-num" id="stat-campus">—</div><div class="stat-label">校園區塊</div></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">📋 最新公告（前5筆）</div></div>
+        <div class="panel-body">
+          <table class="data-table" id="dashboard-ann-table">
+            <thead><tr><th>日期</th><th>標題</th><th>單位</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 公告管理 ── -->
+    <div class="page-tab" id="tab-announcements">
+      <div class="alert alert-success" id="ann-alert"></div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">➕ 新增公告</div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group" style="grid-column:1/-1">
+              <label>公告標題 *</label>
+              <input type="text" id="ann-title" placeholder="公告標題">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>日期 *</label>
+              <input type="date" id="ann-date">
+            </div>
+            <div class="form-group">
+              <label>發布單位</label>
+              <select id="ann-dept">
+                <option value="">無分組</option>
+                <option value="student">學務處</option>
+                <option value="academic">教務處</option>
+                <option value="general">總務處</option>
+                <option value="counseling">輔導室</option>
+                <option value="discipline">訓育組</option>
+                <option value="health">衛生組</option>
+                <option value="moral">生教組</option>
+                <option value="hr">人事處</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>公告內容 *</label>
+            <textarea id="ann-content" rows="3" placeholder="公告內容..."></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label>附加圖片（選填）</label>
+            <input type="file" id="ann-img-file" accept="image/*" onchange="previewImg('ann-img-file','ann-img-preview')">
+            <img id="ann-img-preview" class="img-preview" alt="預覽">
+            <div style="font-size:.78rem;color:var(--text-light);margin-top:4px;">圖片將上傳至 Supabase Storage / images</div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-green" onclick="addAnnouncement()">✚ 新增公告</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">📋 公告列表</div></div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table" id="ann-table">
+            <thead><tr><th>日期</th><th>標題</th><th>單位</th><th>圖片</th><th style="width:110px;">操作</th></tr></thead>
+            <tbody><tr><td colspan="5" class="empty-state">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 選單按鈕 ── -->
+    <div class="page-tab" id="tab-nav">
+      <div class="alert alert-success" id="nav-alert"></div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">➕ 新增按鈕</div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group"><label>按鈕名稱 *</label><input type="text" id="nav-name" placeholder="例：認識校園"></div>
+            <div class="form-group"><label>連結網址 *</label><input type="text" id="nav-url" placeholder="/campus.html 或 https://..."></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>上層按鈕（子選單用）</label><select id="nav-parent"><option value="">— 最上層 —</option></select></div>
+            <div class="form-group"><label>開啟方式</label><select id="nav-target"><option value="_self">同頁</option><option value="_blank">新頁</option></select></div>
+            <div class="form-group"><label>排列順序</label><input type="number" id="nav-order" value="0" min="0"></div>
+          </div>
+          <div class="form-actions"><button class="btn btn-green" onclick="addNavButton()">✚ 新增</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🔗 選單列表</div></div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table" id="nav-table">
+            <thead><tr><th>名稱</th><th>網址</th><th>上層</th><th>開啟</th><th>順序</th><th style="width:110px;">操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 認識校園 ── -->
+    <div class="page-tab" id="tab-campus">
+      <div class="alert alert-success" id="campus-alert"></div>
+      <!-- 區塊 -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">➕ 新增內容區塊</div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>區塊類型</label>
+              <select id="block-type" onchange="toggleBlockType()">
+                <option value="text">文字</option>
+                <option value="image">圖片</option>
+              </select>
+            </div>
+            <div class="form-group"><label>排列順序</label><input type="number" id="block-order" value="0" min="0"></div>
+          </div>
+          <div id="block-text-area" class="form-group" style="margin-bottom:12px;">
+            <label>文字內容</label>
+            <textarea id="block-content" rows="4" placeholder="輸入校園介紹文字..."></textarea>
+          </div>
+          <div id="block-img-area" style="display:none;" class="form-group">
+            <label>上傳圖片</label>
+            <input type="file" id="block-img-file" accept="image/*" onchange="previewImg('block-img-file','block-img-preview')">
+            <img id="block-img-preview" class="img-preview" alt="預覽">
+          </div>
+          <div class="form-actions"><button class="btn btn-green" onclick="addBlock()">✚ 新增區塊</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">📄 校園區塊列表</div></div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table" id="block-table">
+            <thead><tr><th>類型</th><th>內容預覽</th><th>順序</th><th style="width:110px;">操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- 校園按鈕 -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">➕ 新增校園按鈕</div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group"><label>按鈕名稱 *</label><input type="text" id="cb-name" placeholder="例：學校地圖"></div>
+            <div class="form-group"><label>連結網址 *</label><input type="text" id="cb-url" placeholder="/map 或 https://..."></div>
+            <div class="form-group"><label>開啟方式</label><select id="cb-target"><option value="_self">同頁</option><option value="_blank">新頁</option></select></div>
+            <div class="form-group"><label>順序</label><input type="number" id="cb-order" value="0"></div>
+          </div>
+          <div class="form-actions"><button class="btn btn-green" onclick="addCampusBtn()">✚ 新增按鈕</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🔗 校園按鈕列表</div></div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table" id="cb-table">
+            <thead><tr><th>名稱</th><th>網址</th><th>開啟</th><th>順序</th><th style="width:110px;">操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 網站設定 ── -->
+    <div class="page-tab" id="tab-settings">
+      <div class="alert alert-success" id="settings-alert"></div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">⚙️ 網站基本設定</div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group"><label>學校名稱</label><input type="text" id="s-title"></div>
+            <div class="form-group"><label>副標題</label><input type="text" id="s-subtitle"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>地址</label><input type="text" id="s-address"></div>
+            <div class="form-group"><label>電話</label><input type="text" id="s-phone"></div>
+            <div class="form-group"><label>信箱</label><input type="text" id="s-email"></div>
+          </div>
+          <div class="form-actions"><button class="btn btn-green" onclick="saveSettings()">💾 儲存</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 修改密碼 ── -->
+    <div class="page-tab" id="tab-password">
+      <div class="alert alert-success" id="pw-alert"></div>
+      <div class="panel" style="max-width:440px;">
+        <div class="panel-header"><div class="panel-title">🔑 修改密碼</div></div>
+        <div class="panel-body">
+          <div class="form-group" style="margin-bottom:12px;"><label>目前密碼 *</label><input type="password" id="pw-old"></div>
+          <div class="form-group" style="margin-bottom:12px;"><label>新密碼 *</label><input type="password" id="pw-new"></div>
+          <div class="form-group" style="margin-bottom:16px;"><label>確認新密碼 *</label><input type="password" id="pw-confirm"></div>
+          <button class="btn btn-green" onclick="changePassword()">🔒 更新密碼</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ── Edit 公告 Modal ── -->
+<div class="m-overlay" id="edit-ann-modal">
+  <div class="m-box">
+    <div class="m-title">✏️ 編輯公告</div>
+    <input type="hidden" id="edit-ann-id">
+    <div class="form-group" style="margin-bottom:10px;"><label>標題 *</label><input type="text" id="edit-ann-title"></div>
+    <div class="form-row">
+      <div class="form-group"><label>日期 *</label><input type="date" id="edit-ann-date"></div>
+      <div class="form-group">
+        <label>發布單位</label>
+        <select id="edit-ann-dept">
+          <option value="">無分組</option>
+          <option value="student">學務處</option>
+          <option value="academic">教務處</option>
+          <option value="general">總務處</option>
+          <option value="counseling">輔導室</option>
+          <option value="discipline">訓育組</option>
+          <option value="health">衛生組</option>
+          <option value="moral">生教組</option>
+          <option value="hr">人事處</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;"><label>內容 *</label><textarea id="edit-ann-content" rows="3"></textarea></div>
+    <div class="form-group">
+      <label>更換圖片（選填）</label>
+      <input type="file" id="edit-ann-img-file" accept="image/*" onchange="previewImg('edit-ann-img-file','edit-ann-img-preview')">
+      <img id="edit-ann-img-preview" class="img-preview" alt="預覽">
+      <div class="img-current" id="edit-ann-img-current"></div>
+    </div>
+    <div class="m-footer">
+      <button class="btn btn-red" onclick="closeModal('edit-ann-modal')">取消</button>
+      <button class="btn btn-green" onclick="saveAnnouncement()">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit 選單 Modal ── -->
+<div class="m-overlay" id="edit-nav-modal">
+  <div class="m-box">
+    <div class="m-title">✏️ 編輯按鈕</div>
+    <input type="hidden" id="edit-nav-id">
+    <div class="form-group" style="margin-bottom:10px;"><label>名稱 *</label><input type="text" id="edit-nav-name"></div>
+    <div class="form-group" style="margin-bottom:10px;"><label>網址 *</label><input type="text" id="edit-nav-url"></div>
+    <div class="form-row">
+      <div class="form-group"><label>上層按鈕</label><select id="edit-nav-parent"></select></div>
+      <div class="form-group"><label>開啟方式</label><select id="edit-nav-target"><option value="_self">同頁</option><option value="_blank">新頁</option></select></div>
+      <div class="form-group"><label>順序</label><input type="number" id="edit-nav-order" value="0"></div>
+    </div>
+    <div class="m-footer">
+      <button class="btn btn-red" onclick="closeModal('edit-nav-modal')">取消</button>
+      <button class="btn btn-green" onclick="saveNavButton()">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit 區塊 Modal ── -->
+<div class="m-overlay" id="edit-block-modal">
+  <div class="m-box">
+    <div class="m-title">✏️ 編輯區塊</div>
+    <input type="hidden" id="edit-block-id">
+    <input type="hidden" id="edit-block-type">
+    <div id="edit-block-text-area" class="form-group" style="margin-bottom:10px;">
+      <label>文字內容</label>
+      <textarea id="edit-block-content" rows="5"></textarea>
+    </div>
+    <div id="edit-block-img-area">
+      <div class="form-group" style="margin-bottom:6px;">
+        <label>更換圖片（選填）</label>
+        <input type="file" id="edit-block-img-file" accept="image/*" onchange="previewImg('edit-block-img-file','edit-block-img-preview')">
+        <img id="edit-block-img-preview" class="img-preview" alt="預覽">
+        <div class="img-current" id="edit-block-img-current"></div>
+      </div>
+    </div>
+    <div class="form-group"><label>排列順序</label><input type="number" id="edit-block-order" value="0"></div>
+    <div class="m-footer">
+      <button class="btn btn-red" onclick="closeModal('edit-block-modal')">取消</button>
+      <button class="btn btn-green" onclick="saveBlock()">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit 校園按鈕 Modal ── -->
+<div class="m-overlay" id="edit-cb-modal">
+  <div class="m-box">
+    <div class="m-title">✏️ 編輯校園按鈕</div>
+    <input type="hidden" id="edit-cb-id">
+    <div class="form-group" style="margin-bottom:10px;"><label>名稱 *</label><input type="text" id="edit-cb-name"></div>
+    <div class="form-group" style="margin-bottom:10px;"><label>網址 *</label><input type="text" id="edit-cb-url"></div>
+    <div class="form-row">
+      <div class="form-group"><label>開啟方式</label><select id="edit-cb-target"><option value="_self">同頁</option><option value="_blank">新頁</option></select></div>
+      <div class="form-group"><label>順序</label><input type="number" id="edit-cb-order" value="0"></div>
+    </div>
+    <div class="m-footer">
+      <button class="btn btn-red" onclick="closeModal('edit-cb-modal')">取消</button>
+      <button class="btn btn-green" onclick="saveCampusBtn()">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEPT_LABELS = {
+  student:'學務處',academic:'教務處',general:'總務處',
+  counseling:'輔導室',discipline:'訓育組',health:'衛生組',
+  moral:'生教組',hr:'人事處'
+}
+
+// ── 時鐘 ──────────────────────────────────────────────────
+function updateClock() { document.getElementById('topbar-time').textContent = new Date().toLocaleString('zh-TW') }
+setInterval(updateClock, 1000); updateClock()
+document.getElementById('ann-date').value = new Date().toISOString().slice(0,10)
+
+// ── Auth ──────────────────────────────────────────────────
+async function checkAuth() {
+  const r = await fetch('/admin-api/check-auth')
+  const d = await r.json()
+  if (!d.loggedIn) { window.location.href = '/'; return }
+  document.getElementById('sidebar-username').textContent = d.username
+  document.getElementById('sidebar-avatar').textContent = d.username[0].toUpperCase()
+}
+async function doLogout() {
+  await fetch('/admin-api/logout', { method:'POST' })
+  window.location.href = '/'
+}
+
+// ── Tab 切換 ──────────────────────────────────────────────
+const tabTitles = {
+  dashboard:['🏠 控制台首頁','首頁'],
+  announcements:['📢 公告管理','公告管理'],
+  nav:['🔗 選單按鈕管理','選單按鈕'],
+  campus:['🏫 認識校園管理','認識校園'],
+  settings:['⚙️ 網站設定','網站設定'],
+  password:['🔑 修改密碼','修改密碼'],
+}
+function showTab(name, el) {
+  document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'))
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'))
+  document.getElementById('tab-'+name).classList.add('active')
+  if (el) el.classList.add('active')
+  const [title, sub] = tabTitles[name] || ['後台','']
+  document.getElementById('page-title').textContent = title
+  document.getElementById('breadcrumb-sub').textContent = sub
+  if (name==='announcements') loadAnnouncements()
+  if (name==='nav') loadNavButtons()
+  if (name==='campus') { loadBlocks(); loadCampusBtns() }
+  if (name==='settings') loadSettings()
+}
+
+// ── API helper ────────────────────────────────────────────
+async function api(url, method='GET', body=null) {
+  const opts = { method, headers:{'Content-Type':'application/json'} }
+  if (body) opts.body = JSON.stringify(body)
+  const r = await fetch(url, opts)
+  return r.json()
+}
+function showAlert(id, msg, type='success') {
+  const el = document.getElementById(id)
+  el.textContent = msg; el.className = `alert alert-${type} show`
+  setTimeout(() => el.classList.remove('show'), 3500)
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open') }
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+function fmtDate(d) { return String(d||'').slice(0,10) }
+
+// ── 圖片預覽 ──────────────────────────────────────────────
+function previewImg(inputId, previewId) {
+  const file = document.getElementById(inputId).files[0]
+  const prev = document.getElementById(previewId)
+  if (!file) { prev.classList.remove('show'); return }
+  const reader = new FileReader()
+  reader.onload = e => { prev.src = e.target.result; prev.classList.add('show') }
+  reader.readAsDataURL(file)
+}
+
+// ── 上傳圖片 → Supabase ───────────────────────────────────
+async function uploadImage(inputId) {
+  const file = document.getElementById(inputId)?.files[0]
+  if (!file) return null
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = async e => {
+      const base64 = e.target.result.split(',')[1]
+      const mimeType = file.type
+      const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`
+      try {
+        const r = await api('/admin-api/upload-image', 'POST', { base64, mimeType, filename })
+        if (r.success) resolve(r.url)
+        else reject(new Error(r.message || '上傳失敗'))
+      } catch(err) { reject(err) }
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+// ── Dashboard ─────────────────────────────────────────────
+async function loadDashboard() {
+  const [ar, nr, cr] = await Promise.all([
+    api('/admin-api/announcements'),
+    api('/admin-api/nav-buttons'),
+    api('/admin-api/campus-blocks')
+  ])
+  const anns = ar.data||[]; const navs = nr.data||[]; const blocks = cr.data||[]
+  document.getElementById('stat-ann').textContent = anns.length
+  document.getElementById('stat-nav').textContent = navs.length
+  document.getElementById('stat-campus').textContent = blocks.length
+  const tbody = document.querySelector('#dashboard-ann-table tbody')
+  tbody.innerHTML = anns.slice(0,5).map(a =>
+    `<tr><td><span style="font-family:monospace;font-size:.82rem;">${fmtDate(a.date)}</span></td>
+     <td>${escH(a.title)}</td>
+     <td>${a.department ? `<span class="dept-badge">${DEPT_LABELS[a.department]||a.department}</span>` : '—'}</td></tr>`
+  ).join('') || '<tr><td colspan="3" class="empty-state">尚無公告</td></tr>'
+}
+
+// ── 公告 ──────────────────────────────────────────────────
+let _anns = []
+async function loadAnnouncements() {
+  const r = await api('/admin-api/announcements')
+  _anns = r.data || []; renderAnnTable()
+}
+function renderAnnTable() {
+  const tbody = document.querySelector('#ann-table tbody')
+  if (_anns.length===0) { tbody.innerHTML='<tr><td colspan="5" class="empty-state">尚無公告</td></tr>'; return }
+  tbody.innerHTML = _anns.map(a => `
+    <tr>
+      <td style="font-family:monospace;font-size:.82rem;">${fmtDate(a.date)}</td>
+      <td style="font-weight:600;">${escH(a.title)}</td>
+      <td>${a.department ? `<span class="dept-badge">${DEPT_LABELS[a.department]||a.department}</span>` : '—'}</td>
+      <td>${a.image_url ? `<img src="${a.image_url}" style="width:48px;height:36px;object-fit:cover;border-radius:4px;">` : '—'}</td>
+      <td>
+        <button class="btn btn-blue btn-sm" onclick="openEditAnn(${a.id})">✏️</button>
+        <button class="btn btn-red btn-sm" onclick="deleteAnn(${a.id})" style="margin-left:3px;">🗑</button>
+      </td>
+    </tr>`).join('')
+}
+async function addAnnouncement() {
+  const title = document.getElementById('ann-title').value.trim()
+  const content = document.getElementById('ann-content').value.trim()
+  const date = document.getElementById('ann-date').value
+  const dept = document.getElementById('ann-dept').value
+  if (!title||!content||!date) { showAlert('ann-alert','請填寫所有必填欄位','error'); return }
+  let image_url = null
+  try {
+    image_url = await uploadImage('ann-img-file')
+  } catch(e) { showAlert('ann-alert','圖片上傳失敗：'+e.message,'error'); return }
+  const r = await api('/admin-api/announcements','POST',{title,content,date,department:dept||null,image_url})
+  if (r.success) {
+    showAlert('ann-alert','✅ 公告已新增！')
+    document.getElementById('ann-title').value=''
+    document.getElementById('ann-content').value=''
+    document.getElementById('ann-img-file').value=''
+    document.getElementById('ann-img-preview').classList.remove('show')
+    loadAnnouncements()
+  }
+}
+function openEditAnn(id) {
+  const a = _anns.find(x=>x.id===id); if (!a) return
+  document.getElementById('edit-ann-id').value = a.id
+  document.getElementById('edit-ann-title').value = a.title
+  document.getElementById('edit-ann-date').value = fmtDate(a.date)
+  document.getElementById('edit-ann-content').value = a.content
+  document.getElementById('edit-ann-dept').value = a.department||''
+  document.getElementById('edit-ann-img-file').value = ''
+  document.getElementById('edit-ann-img-preview').classList.remove('show')
+  const cur = document.getElementById('edit-ann-img-current')
+  cur.innerHTML = a.image_url ? `目前圖片：<img src="${a.image_url}" alt="">` : '目前無圖片'
+  document.getElementById('edit-ann-modal').classList.add('open')
+}
+async function saveAnnouncement() {
+  const id = document.getElementById('edit-ann-id').value
+  const title = document.getElementById('edit-ann-title').value.trim()
+  const date = document.getElementById('edit-ann-date').value
+  const content = document.getElementById('edit-ann-content').value.trim()
+  const dept = document.getElementById('edit-ann-dept').value
+  const existing = _anns.find(x=>String(x.id)===String(id))
+  let image_url = existing?.image_url || null
+  try {
+    const uploaded = await uploadImage('edit-ann-img-file')
+    if (uploaded) image_url = uploaded
+  } catch(e) { showAlert('ann-alert','圖片上傳失敗：'+e.message,'error'); return }
+  await api('/admin-api/announcements/'+id,'PUT',{title,content,date,department:dept||null,image_url})
+  closeModal('edit-ann-modal')
+  showAlert('ann-alert','✅ 公告已更新！')
+  loadAnnouncements()
+}
+async function deleteAnn(id) {
+  if (!confirm('確定刪除此公告？')) return
+  await api('/admin-api/announcements/'+id,'DELETE')
+  showAlert('ann-alert','🗑 公告已刪除')
+  loadAnnouncements()
+}
+
+// ── 選單按鈕 ──────────────────────────────────────────────
+let _navs = []
+async function loadNavButtons() {
+  const r = await api('/admin-api/nav-buttons')
+  _navs = r.data || []; renderNavTable(); populateParentSelects()
+}
+function renderNavTable() {
+  const tbody = document.querySelector('#nav-table tbody')
+  if (_navs.length===0) { tbody.innerHTML='<tr><td colspan="6" class="empty-state">尚無按鈕</td></tr>'; return }
+  tbody.innerHTML = _navs.map(n => {
+    const parent = _navs.find(x=>x.id===n.parent_id)
+    return `<tr>
+      <td style="font-weight:600;">${n.parent_id?'&nbsp;↳ ':''}${escH(n.name)}</td>
+      <td style="font-size:.8rem;color:var(--text-light);">${escH(n.url)}</td>
+      <td>${parent?`<span class="badge badge-gold">${escH(parent.name)}</span>`:'<span class="badge badge-green">主選單</span>'}</td>
+      <td><span class="badge badge-green">${n.target==='_blank'?'新頁':'同頁'}</span></td>
+      <td>${n.sort_order}</td>
+      <td>
+        <button class="btn btn-blue btn-sm" onclick="openEditNav(${n.id})">✏️</button>
+        <button class="btn btn-red btn-sm" onclick="deleteNav(${n.id})" style="margin-left:3px;">🗑</button>
+      </td></tr>`
+  }).join('')
+}
+function populateParentSelects() {
+  const parents = _navs.filter(n=>!n.parent_id)
+  const opts = '<option value="">— 最上層 —</option>'+parents.map(n=>`<option value="${n.id}">${escH(n.name)}</option>`).join('')
+  document.getElementById('nav-parent').innerHTML = opts
+  document.getElementById('edit-nav-parent').innerHTML = opts
+}
+async function addNavButton() {
+  const name=document.getElementById('nav-name').value.trim()
+  const url=document.getElementById('nav-url').value.trim()
+  const parent_id=document.getElementById('nav-parent').value||null
+  const sort_order=parseInt(document.getElementById('nav-order').value)||0
+  const target=document.getElementById('nav-target').value
+  if (!name||!url) { showAlert('nav-alert','請填寫名稱與網址','error'); return }
+  await api('/admin-api/nav-buttons','POST',{name,url,parent_id,sort_order,target})
+  showAlert('nav-alert','✅ 按鈕已新增！')
+  document.getElementById('nav-name').value=''
+  document.getElementById('nav-url').value=''
+  loadNavButtons()
+}
+function openEditNav(id) {
+  const n=_navs.find(x=>x.id===id); if(!n) return
+  document.getElementById('edit-nav-id').value=n.id
+  document.getElementById('edit-nav-name').value=n.name
+  document.getElementById('edit-nav-url').value=n.url
+  document.getElementById('edit-nav-order').value=n.sort_order
+  document.getElementById('edit-nav-target').value=n.target||'_self'
+  populateParentSelects()
+  document.getElementById('edit-nav-parent').value=n.parent_id||''
+  document.getElementById('edit-nav-modal').classList.add('open')
+}
+async function saveNavButton() {
+  const id=document.getElementById('edit-nav-id').value
+  const name=document.getElementById('edit-nav-name').value.trim()
+  const url=document.getElementById('edit-nav-url').value.trim()
+  const parent_id=document.getElementById('edit-nav-parent').value||null
+  const sort_order=parseInt(document.getElementById('edit-nav-order').value)||0
+  const target=document.getElementById('edit-nav-target').value
+  if(!name||!url) return
+  await api('/admin-api/nav-buttons/'+id,'PUT',{name,url,parent_id,sort_order,target})
+  closeModal('edit-nav-modal'); showAlert('nav-alert','✅ 按鈕已更新！'); loadNavButtons()
+}
+async function deleteNav(id) {
+  if(!confirm('確定刪除？子按鈕也會刪除。')) return
+  await api('/admin-api/nav-buttons/'+id,'DELETE')
+  showAlert('nav-alert','🗑 已刪除'); loadNavButtons()
+}
+
+// ── Campus 區塊 ───────────────────────────────────────────
+let _blocks = []
+function toggleBlockType() {
+  const t=document.getElementById('block-type').value
+  document.getElementById('block-text-area').style.display=t==='text'?'flex':'none'
+  document.getElementById('block-img-area').style.display=t==='image'?'block':'none'
+}
+async function loadBlocks() {
+  const r=await api('/admin-api/campus-blocks')
+  _blocks=r.data||[]; renderBlockTable()
+}
+function renderBlockTable() {
+  const tbody=document.querySelector('#block-table tbody')
+  if(_blocks.length===0){tbody.innerHTML='<tr><td colspan="4" class="empty-state">尚無區塊</td></tr>';return}
+  tbody.innerHTML=_blocks.map(b=>`
+    <tr>
+      <td><span class="badge badge-${b.type==='text'?'green':'gold'}">${b.type==='text'?'📝 文字':'🖼 圖片'}</span></td>
+      <td style="font-size:.82rem;color:var(--text-light);max-width:280px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">
+        ${b.type==='text'?escH((b.content||'').slice(0,60)):b.image_url?`<img src="${b.image_url}" style="width:60px;height:40px;object-fit:cover;border-radius:4px;">` : '（無圖片）'}
+      </td>
+      <td>${b.sort_order}</td>
+      <td>
+        <button class="btn btn-blue btn-sm" onclick="openEditBlock(${b.id})">✏️</button>
+        <button class="btn btn-red btn-sm" onclick="deleteBlock(${b.id})" style="margin-left:3px;">🗑</button>
+      </td>
+    </tr>`).join('')
+}
+async function addBlock() {
+  const type=document.getElementById('block-type').value
+  const sort_order=parseInt(document.getElementById('block-order').value)||0
+  let content=null, image_url=null
+  if(type==='text') {
+    content=document.getElementById('block-content').value.trim()
+    if(!content){showAlert('campus-alert','請填寫文字內容','error');return}
+  } else {
+    try { image_url=await uploadImage('block-img-file') }
+    catch(e){showAlert('campus-alert','圖片上傳失敗：'+e.message,'error');return}
+    if(!image_url){showAlert('campus-alert','請選擇圖片','error');return}
+  }
+  await api('/admin-api/campus-blocks','POST',{type,content,image_url,sort_order})
+  showAlert('campus-alert','✅ 區塊已新增！')
+  document.getElementById('block-content').value=''
+  document.getElementById('block-img-file').value=''
+  document.getElementById('block-img-preview').classList.remove('show')
+  loadBlocks()
+}
+function openEditBlock(id) {
+  const b=_blocks.find(x=>x.id===id); if(!b) return
+  document.getElementById('edit-block-id').value=b.id
+  document.getElementById('edit-block-type').value=b.type
+  document.getElementById('edit-block-order').value=b.sort_order
+  document.getElementById('edit-block-content').value=b.content||''
+  document.getElementById('edit-block-img-file').value=''
+  document.getElementById('edit-block-img-preview').classList.remove('show')
+  const cur=document.getElementById('edit-block-img-current')
+  cur.innerHTML=b.image_url?`目前圖片：<img src="${b.image_url}" alt="">` : ''
+  document.getElementById('edit-block-text-area').style.display=b.type==='text'?'flex':'none'
+  document.getElementById('edit-block-img-area').style.display=b.type==='image'?'block':'none'
+  document.getElementById('edit-block-modal').classList.add('open')
+}
+async function saveBlock() {
+  const id=document.getElementById('edit-block-id').value
+  const type=document.getElementById('edit-block-type').value
+  const sort_order=parseInt(document.getElementById('edit-block-order').value)||0
+  const existing=_blocks.find(x=>String(x.id)===String(id))
+  let content=existing?.content||null, image_url=existing?.image_url||null
+  if(type==='text') content=document.getElementById('edit-block-content').value.trim()
+  else {
+    try { const up=await uploadImage('edit-block-img-file'); if(up) image_url=up }
+    catch(e){showAlert('campus-alert','圖片上傳失敗','error');return}
+  }
+  await api('/admin-api/campus-blocks/'+id,'PUT',{type,content,image_url,sort_order})
+  closeModal('edit-block-modal'); showAlert('campus-alert','✅ 區塊已更新！'); loadBlocks()
+}
+async function deleteBlock(id) {
+  if(!confirm('確定刪除此區塊？')) return
+  await api('/admin-api/campus-blocks/'+id,'DELETE')
+  showAlert('campus-alert','🗑 已刪除'); loadBlocks()
+}
+
+// ── Campus 按鈕 ───────────────────────────────────────────
+let _cbtns = []
+async function loadCampusBtns() {
+  const r=await api('/admin-api/campus-buttons')
+  _cbtns=r.data||[]; renderCbTable()
+}
+function renderCbTable() {
+  const tbody=document.querySelector('#cb-table tbody')
+  if(_cbtns.length===0){tbody.innerHTML='<tr><td colspan="5" class="empty-state">尚無按鈕</td></tr>';return}
+  tbody.innerHTML=_cbtns.map(b=>`
+    <tr>
+      <td style="font-weight:600;">${escH(b.name)}</td>
+      <td style="font-size:.8rem;color:var(--text-light);">${escH(b.url)}</td>
+      <td><span class="badge badge-green">${b.target==='_blank'?'新頁':'同頁'}</span></td>
+      <td>${b.sort_order}</td>
+      <td>
+        <button class="btn btn-blue btn-sm" onclick="openEditCb(${b.id})">✏️</button>
+        <button class="btn btn-red btn-sm" onclick="deleteCb(${b.id})" style="margin-left:3px;">🗑</button>
+      </td>
+    </tr>`).join('')
+}
+async function addCampusBtn() {
+  const name=document.getElementById('cb-name').value.trim()
+  const url=document.getElementById('cb-url').value.trim()
+  const target=document.getElementById('cb-target').value
+  const sort_order=parseInt(document.getElementById('cb-order').value)||0
+  if(!name||!url){showAlert('campus-alert','請填寫名稱與網址','error');return}
+  await api('/admin-api/campus-buttons','POST',{name,url,target,sort_order})
+  showAlert('campus-alert','✅ 按鈕已新增！')
+  document.getElementById('cb-name').value=''
+  document.getElementById('cb-url').value=''
+  loadCampusBtns()
+}
+function openEditCb(id) {
+  const b=_cbtns.find(x=>x.id===id); if(!b) return
+  document.getElementById('edit-cb-id').value=b.id
+  document.getElementById('edit-cb-name').value=b.name
+  document.getElementById('edit-cb-url').value=b.url
+  document.getElementById('edit-cb-target').value=b.target||'_self'
+  document.getElementById('edit-cb-order').value=b.sort_order
+  document.getElementById('edit-cb-modal').classList.add('open')
+}
+async function saveCampusBtn() {
+  const id=document.getElementById('edit-cb-id').value
+  const name=document.getElementById('edit-cb-name').value.trim()
+  const url=document.getElementById('edit-cb-url').value.trim()
+  const target=document.getElementById('edit-cb-target').value
+  const sort_order=parseInt(document.getElementById('edit-cb-order').value)||0
+  await api('/admin-api/campus-buttons/'+id,'PUT',{name,url,target,sort_order})
+  closeModal('edit-cb-modal'); showAlert('campus-alert','✅ 按鈕已更新！'); loadCampusBtns()
+}
+async function deleteCb(id) {
+  if(!confirm('確定刪除？')) return
+  await api('/admin-api/campus-buttons/'+id,'DELETE')
+  showAlert('campus-alert','🗑 已刪除'); loadCampusBtns()
+}
+
+// ── 網站設定 ──────────────────────────────────────────────
+async function loadSettings() {
+  const r=await api('/admin-api/settings')
+  const s=r.data||{}
+  document.getElementById('s-title').value=s.site_title||''
+  document.getElementById('s-subtitle').value=s.site_subtitle||''
+  document.getElementById('s-address').value=s.site_address||''
+  document.getElementById('s-phone').value=s.site_phone||''
+  document.getElementById('s-email').value=s.site_email||''
+}
+async function saveSettings() {
+  await api('/admin-api/settings','POST',{
+    site_title:document.getElementById('s-title').value,
+    site_subtitle:document.getElementById('s-subtitle').value,
+    site_address:document.getElementById('s-address').value,
+    site_phone:document.getElementById('s-phone').value,
+    site_email:document.getElementById('s-email').value,
+  })
+  showAlert('settings-alert','✅ 設定已儲存！')
+}
+
+// ── 修改密碼 ──────────────────────────────────────────────
+async function changePassword() {
+  const oldPassword=document.getElementById('pw-old').value
+  const newPassword=document.getElementById('pw-new').value
+  const confirm=document.getElementById('pw-confirm').value
+  if(!oldPassword||!newPassword){showAlert('pw-alert','請填寫所有欄位','error');return}
+  if(newPassword!==confirm){showAlert('pw-alert','新密碼與確認不符','error');return}
+  if(newPassword.length<6){showAlert('pw-alert','新密碼至少6個字元','error');return}
+  const r=await api('/admin-api/change-password','POST',{oldPassword,newPassword})
+  if(r.success){
+    showAlert('pw-alert','✅ 密碼已更新！')
+    document.getElementById('pw-old').value=''
+    document.getElementById('pw-new').value=''
+    document.getElementById('pw-confirm').value=''
+  } else { showAlert('pw-alert',r.message||'更新失敗','error') }
+}
+
+// ── Modal overlay 點外側關閉 ──────────────────────────────
+document.querySelectorAll('.m-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open') })
+})
+
+// ── Init ──────────────────────────────────────────────────
+checkAuth().then(() => loadDashboard())
+</script>
+</body>
+</html>
