@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>榮譽榜 - 御園國小</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700;900&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --gold1:#f7d56e;--gold2:#e8a800;--gold3:#b87800;
+      --deep:#0e0b1a;--deep2:#17102e;--deep3:#231648;
+      --card-bg:rgba(30,20,60,.75);--card-border:rgba(247,213,110,.18);
+      --text:#f0eaff;--text-sub:#a090c8;--text-dim:rgba(160,144,200,.5);
+      --radius:16px;
+      --font-title:'Noto Serif TC',serif;
+      --font-body:'Noto Sans TC',sans-serif;
+      --ease:cubic-bezier(.4,0,.2,1);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{
+      font-family:var(--font-body);
+      background:var(--deep);
+      color:var(--text);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    /* ── 全頁過場 ── */
+    body{animation:pageIn .5s var(--ease) both;}
+    @keyframes pageIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+    /* ── 背景：動態漸層 + 光暈 ── */
+    .bg-layer{
+      position:fixed;inset:0;z-index:0;pointer-events:none;
+      background:
+        radial-gradient(ellipse 80% 60% at 10% 10%,rgba(100,40,200,.22) 0%,transparent 70%),
+        radial-gradient(ellipse 70% 50% at 90% 90%,rgba(40,10,120,.28) 0%,transparent 70%),
+        radial-gradient(ellipse 60% 80% at 50% 0%,rgba(180,120,10,.1) 0%,transparent 60%),
+        linear-gradient(160deg,#0e0b1a 0%,#13092a 50%,#0a0818 100%);
+    }
+    /* 浮動光球 */
+    .orb{
+      position:fixed;border-radius:50%;filter:blur(60px);
+      pointer-events:none;z-index:0;
+      animation:orbFloat var(--dur,12s) var(--ease) infinite alternate;
+    }
+    @keyframes orbFloat{from{transform:translate(0,0) scale(1);}to{transform:translate(var(--tx,30px),var(--ty,-20px)) scale(1.1);}}
+
+    /* ── 星粒 ── */
+    .stars{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+    .star{
+      position:absolute;border-radius:50%;background:#fff;
+      animation:twinkle var(--d,3s) var(--delay,0s) infinite;
+    }
+    @keyframes twinkle{
+      0%,100%{opacity:.15;transform:scale(1);}
+      50%{opacity:.9;transform:scale(1.4);}
+    }
+
+    /* ── Nav ── */
+    .top-nav{
+      position:relative;z-index:20;
+      background:rgba(14,11,26,.8);
+      backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+      border-bottom:1px solid rgba(247,213,110,.15);
+      padding:14px 28px;
+      display:flex;align-items:center;gap:14px;
+      transition:background .3s var(--ease);
+    }
+    .nav-logo{
+      width:42px;height:42px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(135deg,var(--gold1),var(--gold3));
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--font-title);font-weight:900;font-size:18px;color:#0e0b1a;
+      box-shadow:0 0 20px rgba(247,213,110,.45);
+      transition:box-shadow .3s var(--ease);
+    }
+    .nav-logo:hover{box-shadow:0 0 32px rgba(247,213,110,.7);}
+    .nav-title{font-family:var(--font-title);font-size:1.05rem;font-weight:700;color:var(--gold1);letter-spacing:1px;}
+    .nav-back{
+      margin-left:auto;
+      background:rgba(247,213,110,.1);border:1px solid rgba(247,213,110,.25);
+      color:var(--gold1);padding:7px 18px;border-radius:20px;
+      font-size:.82rem;text-decoration:none;
+      transition:background .2s var(--ease),transform .2s var(--ease);
+    }
+    .nav-back:hover{background:rgba(247,213,110,.22);transform:translateX(-2px);}
+
+    /* ── Hero ── */
+    .hero{
+      position:relative;z-index:1;
+      text-align:center;padding:64px 20px 40px;
+    }
+    .crown-wrap{
+      margin-bottom:20px;display:inline-block;
+      animation:crownFloat 4s ease-in-out infinite;
+      filter:drop-shadow(0 0 24px rgba(247,213,110,.7));
+    }
+    @keyframes crownFloat{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-10px) rotate(3deg);}}
+    .crown-emoji{font-size:4rem;line-height:1;display:block;}
+
+    .hero-title{
+      font-family:var(--font-title);
+      font-size:3rem;font-weight:900;letter-spacing:6px;
+      background:linear-gradient(135deg,#fff5c0 0%,var(--gold1) 40%,#fff 60%,var(--gold1) 80%,#c8960a 100%);
+      background-size:200% auto;
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      animation:shimmer 4s linear infinite;
+      margin-bottom:10px;
+    }
+    @keyframes shimmer{to{background-position:200% center;}}
+    .hero-sub{
+      color:var(--text-sub);font-size:.95rem;letter-spacing:2px;margin-bottom:32px;
+      animation:fadeUp .8s .3s var(--ease) both;
+    }
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+    .hero-divider{
+      display:flex;align-items:center;gap:14px;max-width:500px;margin:0 auto;
+      animation:fadeUp .8s .5s var(--ease) both;
+    }
+    .hdl{flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(247,213,110,.5),transparent);}
+    .hdd{color:var(--gold1);font-size:1.1rem;animation:spin 8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* ── 統計條 ── */
+    .stats-bar{
+      position:relative;z-index:1;
+      display:flex;justify-content:center;flex-wrap:wrap;gap:12px;
+      padding:28px 20px 0;
+      animation:fadeUp .6s .6s var(--ease) both;
+    }
+    .stat-chip{
+      display:flex;align-items:center;gap:8px;
+      background:rgba(247,213,110,.07);
+      border:1px solid rgba(247,213,110,.18);
+      border-radius:40px;padding:8px 20px;
+      font-size:.85rem;color:var(--text-sub);
+      transition:all .25s var(--ease);
+    }
+    .stat-chip:hover{background:rgba(247,213,110,.13);border-color:rgba(247,213,110,.35);}
+    .stat-chip strong{color:var(--gold1);font-size:1.1rem;margin:0 2px;}
+
+    /* ── 分類篩選 ── */
+    .filter-section{
+      position:relative;z-index:1;
+      padding:28px 20px;
+      animation:fadeUp .6s .7s var(--ease) both;
+    }
+    .filter-scroll{
+      display:flex;gap:8px;flex-wrap:wrap;justify-content:center;
+    }
+    .filter-btn{
+      padding:9px 20px;border-radius:40px;
+      border:1.5px solid rgba(247,213,110,.2);
+      background:rgba(247,213,110,.05);
+      color:var(--text-sub);
+      font-size:.85rem;font-weight:600;cursor:pointer;
+      font-family:var(--font-body);
+      transition:all .25s var(--ease);
+      position:relative;overflow:hidden;
+    }
+    .filter-btn::before{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(135deg,rgba(247,213,110,.15),transparent);
+      opacity:0;transition:opacity .25s var(--ease);
+    }
+    .filter-btn:hover{border-color:rgba(247,213,110,.5);color:var(--gold1);transform:translateY(-1px);}
+    .filter-btn:hover::before{opacity:1;}
+    .filter-btn.active{
+      background:linear-gradient(135deg,var(--gold2),var(--gold3));
+      color:#0e0b1a;border-color:transparent;
+      box-shadow:0 4px 20px rgba(232,168,0,.4);
+      transform:translateY(-2px);
+    }
+
+    /* ── Grid ── */
+    .honors-section{
+      position:relative;z-index:1;
+      max-width:1280px;margin:0 auto;
+      padding:0 20px 80px;
+    }
+    .honors-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+      gap:24px;
+    }
+
+    /* ── 榮譽卡片 ── */
+    .honor-card{
+      position:relative;
+      background:var(--card-bg);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border:1px solid var(--card-border);
+      border-radius:var(--radius);
+      padding:28px 24px 22px;
+      overflow:hidden;
+      transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s var(--ease);
+      animation:cardIn .5s var(--ease) var(--delay,0s) both;
+    }
+    @keyframes cardIn{
+      from{opacity:0;transform:translateY(24px) scale(.97);}
+      to{opacity:1;transform:translateY(0) scale(1);}
+    }
+    .honor-card:hover{
+      transform:translateY(-8px) scale(1.01);
+      box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 40px rgba(247,213,110,.12);
+      border-color:rgba(247,213,110,.45);
+    }
+    /* 頂部金線 */
+    .honor-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(to right,transparent,var(--gold1),transparent);
+      transition:opacity .3s var(--ease);
+    }
+    .honor-card:hover::before{opacity:1;}
+    /* 右下裝飾 */
+    .card-deco{
+      position:absolute;right:-10px;bottom:-14px;
+      font-size:5.5rem;opacity:.05;
+      pointer-events:none;filter:grayscale(1);
+      transition:opacity .3s var(--ease),transform .3s var(--ease);
+    }
+    .honor-card:hover .card-deco{opacity:.09;transform:scale(1.1) rotate(5deg);}
+
+    /* 類別標籤 */
+    .card-cat{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 12px;border-radius:20px;margin-bottom:16px;
+      font-size:.72rem;font-weight:700;letter-spacing:.5px;
+      background:rgba(247,213,110,.12);
+      color:var(--gold1);border:1px solid rgba(247,213,110,.22);
+      transition:background .2s var(--ease);
+    }
+    .honor-card:hover .card-cat{background:rgba(247,213,110,.2);}
+
+    /* 獎牌 */
+    .card-medal{
+      font-size:3rem;line-height:1;display:block;margin-bottom:14px;
+      filter:drop-shadow(0 0 12px rgba(247,213,110,.6));
+      transition:transform .3s var(--ease),filter .3s var(--ease);
+    }
+    .honor-card:hover .card-medal{
+      transform:scale(1.15) rotate(-5deg);
+      filter:drop-shadow(0 0 20px rgba(247,213,110,.9));
+    }
+
+    /* 獎項名 */
+    .card-title{
+      font-family:var(--font-title);
+      font-size:1.25rem;font-weight:700;
+      color:var(--gold1);
+      line-height:1.4;margin-bottom:6px;
+    }
+
+    /* 當選名稱 */
+    .card-award-label{
+      font-size:.92rem;font-weight:600;color:var(--text);
+      margin-bottom:16px;padding-bottom:14px;
+      border-bottom:1px solid rgba(247,213,110,.1);
+    }
+
+    /* 學生資訊 */
+    .card-student{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+    .student-avatar{
+      width:40px;height:40px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(135deg,var(--deep3),rgba(100,50,200,.6));
+      border:1.5px solid rgba(247,213,110,.3);
+      display:flex;align-items:center;justify-content:center;
+      font-size:.95rem;font-weight:700;color:var(--gold1);
+      transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
+    }
+    .honor-card:hover .student-avatar{
+      border-color:rgba(247,213,110,.6);
+      box-shadow:0 0 12px rgba(247,213,110,.3);
+    }
+    .student-name{font-size:1rem;font-weight:700;color:var(--text);}
+    .student-class{font-size:.78rem;color:var(--text-sub);margin-top:2px;}
+
+    /* 補充說明 */
+    .card-desc{
+      font-size:.82rem;color:var(--text-sub);
+      background:rgba(255,255,255,.03);
+      padding:8px 12px;border-radius:8px;
+      border-left:2px solid rgba(247,213,110,.3);
+      line-height:1.65;margin-top:8px;
+    }
+
+    /* 日期 */
+    .card-date{
+      margin-top:12px;font-size:.72rem;color:var(--text-dim);
+      text-align:right;display:flex;justify-content:flex-end;align-items:center;gap:4px;
+    }
+
+    /* ── 空/載入狀態 ── */
+    .state-box{
+      grid-column:1/-1;text-align:center;
+      padding:80px 20px;color:var(--text-sub);
+    }
+    .state-icon{font-size:3.5rem;margin-bottom:16px;opacity:.4;display:block;}
+    .state-text{font-size:.92rem;opacity:.6;}
+    .loading-dots{display:flex;justify-content:center;gap:8px;margin-bottom:14px;}
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--gold1);
+      animation:dotBounce .8s var(--d,0s) ease-in-out infinite;
+    }
+    @keyframes dotBounce{0%,100%{transform:translateY(0);opacity:.3;}50%{transform:translateY(-12px);opacity:1;}}
+
+    /* ── Responsive ── */
+    @media(max-width:900px){
+      .honors-grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));}
+    }
+    @media(max-width:768px){
+      .hero{padding:44px 16px 28px;}
+      .hero-title{font-size:2.2rem;letter-spacing:3px;}
+      .honors-grid{grid-template-columns:1fr;}
+      .honors-section{padding:0 12px 48px;}
+      .filter-section{padding:20px 12px;}
+      .top-nav{padding:12px 14px;}
+      .stats-bar{padding:20px 12px 0;}
+    }
+    @media(max-width:420px){
+      .hero-title{font-size:1.8rem;letter-spacing:2px;}
+      .honor-card{padding:20px 16px 18px;}
+      .card-medal{font-size:2.4rem;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+<!-- 浮動光球 -->
+<div class="orb" style="width:400px;height:400px;top:-100px;left:-100px;background:rgba(120,60,200,.18);--dur:14s;--tx:40px;--ty:30px;"></div>
+<div class="orb" style="width:350px;height:350px;bottom:-80px;right:-80px;background:rgba(200,140,0,.12);--dur:11s;--tx:-30px;--ty:-40px;"></div>
+<div class="orb" style="width:250px;height:250px;top:40%;left:50%;background:rgba(60,20,160,.15);--dur:16s;--tx:20px;--ty:20px;"></div>
+<div class="stars" id="stars"></div>
+
+<nav class="top-nav">
+  <div class="nav-logo">御</div>
+  <span class="nav-title">御園國小 榮譽榜</span>
+  <a href="/" class="nav-back">← 返回首頁</a>
+</nav>
+
+<div class="hero">
+  <div class="crown-wrap"><span class="crown-emoji">👑</span></div>
+  <h1 class="hero-title">榮　譽　榜</h1>
+  <p class="hero-sub">每一份努力都值得被看見，每一份榮耀都閃耀永恆</p>
+  <div class="hero-divider">
+    <div class="hdl"></div>
+    <div class="hdd">✦</div>
+    <div class="hdl"></div>
+  </div>
+</div>
+
+<div class="stats-bar" id="stats-bar">
+  <div class="stat-chip">🏅 得獎總數 <strong id="s-total">—</strong></div>
+  <div class="stat-chip">📂 獎項類別 <strong id="s-cats">—</strong></div>
+  <div class="stat-chip">🎓 得獎人數 <strong id="s-students">—</strong></div>
+</div>
+
+<div class="filter-section">
+  <div class="filter-scroll" id="filter-bar">
+    <button class="filter-btn active" data-cat="">✨ 全部榮譽</button>
+    <button class="filter-btn" data-cat="校內活動">🏫 校內活動</button>
+    <button class="filter-btn" data-cat="全校競賽">🏆 全校競賽</button>
+    <button class="filter-btn" data-cat="學習表現">📚 學習表現</button>
+    <button class="filter-btn" data-cat="全區錦標">🥇 全區錦標</button>
+    <button class="filter-btn" data-cat="市級社團">🎭 市級社團</button>
+    <button class="filter-btn" data-cat="全市錦標">🏅 全市錦標</button>
+    <button class="filter-btn" data-cat="全國社團">🌟 全國社團</button>
+    <button class="filter-btn" data-cat="全國錦標">🎖️ 全國錦標</button>
+  </div>
+</div>
+
+<section class="honors-section">
+  <div class="honors-grid" id="honors-grid">
+    <div class="state-box">
+      <div class="loading-dots">
+        <div class="dot" style="--d:0s"></div>
+        <div class="dot" style="--d:.15s"></div>
+        <div class="dot" style="--d:.3s"></div>
+      </div>
+      <div class="state-text">載入榮譽資料中...</div>
+    </div>
+  </div>
+</section>
+
+<script>
+// ── 星空 ──────────────────────────────────────────────────
+;(function(){
+  const wrap=document.getElementById('stars')
+  for(let i=0;i<140;i++){
+    const s=document.createElement('div')
+    s.className='star'
+    const sz=Math.random()*2.2+.4
+    s.style.cssText=`width:${sz}px;height:${sz}px;
+      left:${Math.random()*100}%;top:${Math.random()*100}%;
+      --d:${2+Math.random()*5}s;--delay:${Math.random()*5}s;
+      opacity:${Math.random()*.4+.1};`
+    wrap.appendChild(s)
+  }
+})()
+
+// ── 常數 ──────────────────────────────────────────────────
+const CAT_ICON={
+  '校內活動':'🏫','全校競賽':'🏆','學習表現':'📚',
+  '全區錦標':'🥇','市級社團':'🎭','全市錦標':'🏅',
+  '全國社團':'🌟','全國錦標':'🎖️'
+}
+function icon(cat){return CAT_ICON[cat]||'🎗️'}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function fmtDate(d){
+  if(!d) return ''
+  return String(d).slice(0,10)
+}
+
+let _all=[]
+
+// ── 統計 ──────────────────────────────────────────────────
+function renderStats(data){
+  document.getElementById('s-total').textContent=data.length
+  document.getElementById('s-cats').textContent=[...new Set(data.map(h=>h.category))].length
+  document.getElementById('s-students').textContent=[...new Set(data.map(h=>h.student_name))].length
+}
+
+// ── 卡片渲染 ──────────────────────────────────────────────
+function renderCards(data){
+  const grid=document.getElementById('honors-grid')
+  if(!data||data.length===0){
+    grid.innerHTML=`<div class="state-box">
+      <span class="state-icon">🏅</span>
+      <div class="state-text">此分類目前尚無榮譽記錄</div>
+    </div>`
+    return
+  }
+  grid.innerHTML=data.map((h,i)=>{
+    const ic=icon(h.category)
+    const initial=h.student_name?h.student_name.slice(-1):'生'
+    const delay=Math.min(i*0.07,0.6)
+    const dateStr=fmtDate(h.award_date)
+    return `<div class="honor-card" style="--delay:${delay}s">
+      <div class="card-deco">${ic}</div>
+      <span class="card-cat">${ic} ${escH(h.category)}</span>
+      <span class="card-medal">${ic}</span>
+      <div class="card-title">${escH(h.title)}</div>
+      <div class="card-award-label">🎗️ ${escH(h.award)}</div>
+      <div class="card-student">
+        <div class="student-avatar">${escH(initial)}</div>
+        <div>
+          <div class="student-name">${escH(h.student_name)}</div>
+          <div class="student-class">${escH(h.class_name)}</div>
+        </div>
+      </div>
+      ${h.description?`<div class="card-desc">💬 ${escH(h.description)}</div>`:''}
+      ${dateStr?`<div class="card-date">📅 ${dateStr}</div>`:''}
+    </div>`
+  }).join('')
+}
+
+// ── 載入 ──────────────────────────────────────────────────
+async function loadHonors(cat=''){
+  const grid=document.getElementById('honors-grid')
+  grid.style.opacity='0'
+  grid.style.transition='opacity .3s ease'
+  setTimeout(()=>{
+    grid.innerHTML=`<div class="state-box">
+      <div class="loading-dots">
+        <div class="dot" style="--d:0s"></div>
+        <div class="dot" style="--d:.15s"></div>
+        <div class="dot" style="--d:.3s"></div>
+      </div>
+      <div class="state-text">載入中...</div>
+    </div>`
+    grid.style.opacity='1'
+  },150)
+  try{
+    const url=cat?`/api/honors?category=${encodeURIComponent(cat)}`:'/api/honors'
+    const res=await fetch(url)
+    const data=await res.json()
+    const honors=data.data||[]
+    if(!cat){_all=honors;renderStats(honors)}
+    setTimeout(()=>{
+      grid.style.opacity='0'
+      setTimeout(()=>{
+        renderCards(honors)
+        grid.style.opacity='1'
+      },200)
+    },300)
+  }catch(e){
+    grid.innerHTML=`<div class="state-box">
+      <span class="state-icon">⚠️</span>
+      <div class="state-text">載入失敗，請稍後再試</div>
+    </div>`
+    grid.style.opacity='1'
+  }
+}
+
+// ── 篩選 ──────────────────────────────────────────────────
+document.getElementById('filter-bar').addEventListener('click',e=>{
+  const btn=e.target.closest('.filter-btn')
+  if(!btn) return
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'))
+  btn.classList.add('active')
+  loadHonors(btn.dataset.cat)
+})
+
+loadHonors()
+
+// 頁面跳轉平滑過場
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href]')
+  if (!a) return
+  const href = a.getAttribute('href')
+  if (!href || href.startsWith('#') || href.startsWith('javascript') ||
+      a.target === '_blank' || e.ctrlKey || e.metaKey) return
+  e.preventDefault()
+  document.body.style.transition = 'opacity .25s ease, transform .25s ease'
+  document.body.style.opacity = '0'
+  document.body.style.transform = 'translateY(-8px)'
+  setTimeout(() => { window.location.href = href }, 260)
+})
+window.addEventListener('pageshow', () => {
+  document.body.style.transition = ''
+  document.body.style.opacity = ''
+  document.body.style.transform = ''
+})
+</script>
+</body>
+</html>
