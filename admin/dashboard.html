@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>御園國小 - 後台管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green-dark:#1a5c3a;--green-mid:#2e8b57;--green-light:#4caf50;
+      --green-pale:#e8f5e9;--gold:#f5b400;--sidebar-bg:#0f3d26;
+      --white:#fff;--gray-bg:#f4f7f5;--text-dark:#1a2b1f;--text-light:#6b8f71;
+      --radius:10px;--font-title:'Noto Serif TC',serif;--font-body:'Noto Sans TC',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{overflow-x:hidden;width:100%;}
+    body{font-family:var(--font-body);background:var(--gray-bg);color:var(--text-dark);display:flex;min-height:100vh;overflow-x:hidden;width:100%;box-sizing:border-box;}
+    body.modal-open{overflow:hidden;}
+    /* Sidebar */
+    .sidebar{width:240px;background:var(--sidebar-bg);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:50;overflow-y:auto;}
+    .sidebar-logo{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px;}
+    .sidebar-icon{width:40px;height:40px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-title);font-weight:900;color:var(--sidebar-bg);font-size:18px;flex-shrink:0;}
+    .sidebar-logo-text h2{font-family:var(--font-title);font-size:.95rem;font-weight:700;}
+    .sidebar-logo-text p{font-size:.68rem;opacity:.6;}
+    .sidebar-nav{flex:1;padding:10px 0;}
+    .sidebar-section-label{font-size:.65rem;letter-spacing:2px;opacity:.4;text-transform:uppercase;padding:14px 16px 4px;}
+    .sidebar-link{display:flex;align-items:center;gap:8px;padding:10px 16px;cursor:pointer;transition:all .15s;color:rgba(255,255,255,.75);font-size:.88rem;border-left:3px solid transparent;}
+    .sidebar-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .sidebar-link.active{background:rgba(255,255,255,.12);color:var(--gold);border-left-color:var(--gold);}
+    .sidebar-link .icon{font-size:1rem;width:22px;text-align:center;}
+    .sidebar-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.1);}
+    .user-badge{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+    .avatar{width:30px;height:30px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;color:var(--sidebar-bg);font-weight:700;font-size:.85rem;}
+    .btn-logout{width:100%;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);padding:7px;border-radius:6px;cursor:pointer;font-size:.8rem;transition:all .2s;}
+    .btn-logout:hover{background:rgba(255,80,80,.25);color:#ff8a80;}
+    /* Main */
+    .main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden;min-width:0;width:0;flex-grow:1;}
+    .topbar{background:var(--white);border-bottom:1px solid #e0e8e2;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+    .page-title{font-family:var(--font-title);font-size:1.2rem;color:var(--green-dark);}
+    .breadcrumb{font-size:.8rem;color:var(--text-light);}
+    .content{padding:24px 28px;flex:1;overflow-x:hidden;min-width:0;}
+    /* Tabs */
+    .page-tab{display:none;}.page-tab.active{display:block;}
+    /* Stats */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;}
+    .stat-card{background:var(--white);border-radius:var(--radius);padding:20px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+    .stat-icon{font-size:1.8rem;}.stat-num{font-size:1.6rem;font-weight:700;color:var(--green-dark);font-family:var(--font-title);}.stat-label{font-size:.78rem;color:var(--text-light);}
+    /* Panel */
+    .panel{background:var(--white);border-radius:var(--radius);box-shadow:0 2px 12px rgba(0,0,0,.06);margin-bottom:20px;}
+    .panel-header{padding:16px 20px;border-bottom:1px solid #e8ede9;display:flex;align-items:center;justify-content:space-between;}
+    .panel-title{font-family:var(--font-title);font-size:1rem;color:var(--green-dark);}
+    .panel-body{padding:20px;}
+    /* Table */
+    .data-table{width:100%;border-collapse:collapse;font-size:.88rem;}
+    .data-table th{text-align:left;padding:9px 12px;background:var(--gray-bg);color:var(--text-light);font-weight:600;font-size:.78rem;text-transform:uppercase;}
+    .data-table td{padding:11px 12px;border-bottom:1px solid #eef1ee;vertical-align:middle;}
+    .data-table tr:last-child td{border-bottom:none;}
+    .data-table tr:hover td{background:#f8fbf8;}
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer;border:none;transition:all .18s;}
+    .btn-green{background:var(--green-dark);color:#fff;}.btn-green:hover{background:var(--green-mid);}
+    .btn-gold{background:var(--gold);color:var(--green-dark);}.btn-gold:hover{background:#e6a800;}
+    .btn-red{background:#ffebee;color:#c62828;border:1px solid #ffcdd2;}.btn-red:hover{background:#ffcdd2;}
+    .btn-blue{background:#e3f2fd;color:#1565c0;border:1px solid #bbdefb;}.btn-blue:hover{background:#bbdefb;}
+    .btn-sm{padding:4px 10px;font-size:.78rem;}
+    /* Form */
+    .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px;}
+    .form-group{display:flex;flex-direction:column;gap:5px;}
+    .form-group label{font-size:.82rem;font-weight:600;color:var(--text-dark);}
+    .form-group input,.form-group textarea,.form-group select{padding:9px 12px;border:1.5px solid #d0dbd2;border-radius:7px;font-size:.88rem;font-family:var(--font-body);outline:none;transition:border-color .2s;}
+    .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--green-mid);}
+    .form-group textarea{resize:vertical;min-height:72px;}
+    .form-actions{display:flex;gap:8px;margin-top:6px;}
+    /* Badge */
+    .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;}
+    .badge-green{background:var(--green-pale);color:var(--green-dark);}
+    .badge-gold{background:#fff8e1;color:#e65100;}
+    /* Alert */
+    .alert{padding:10px 14px;border-radius:7px;font-size:.85rem;margin-bottom:14px;display:none;}
+    .alert.show{display:block;}
+    .alert-success{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;}
+    .alert-error{background:#ffebee;color:#c62828;border:1px solid #ffcdd2;}
+    /* Modal */
+    .m-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;overflow:hidden;}
+    .m-overlay.open{display:flex;align-items:center;justify-content:center;}
+    .m-box{background:#fff;border-radius:14px;padding:28px 24px;width:100%;max-width:520px;box-shadow:0 16px 48px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;}
+    .m-title{font-family:var(--font-title);font-size:1.1rem;color:var(--green-dark);margin-bottom:16px;}
+    .m-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+    .empty-state{text-align:center;padding:32px;color:var(--text-light);}
+    /* Image preview */
+    .img-preview{margin-top:8px;max-width:200px;max-height:160px;border-radius:8px;display:none;}
+    .img-preview.show{display:block;}
+    .img-current{margin-top:6px;font-size:.78rem;color:var(--text-light);}
+    .img-current img{max-width:120px;max-height:80px;border-radius:6px;margin-top:4px;display:block;}
+    /* Dept badge */
+    .dept-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700;background:var(--green-pale);color:var(--green-dark);}
+
+    /* ══════════════════════════════════════════════
+       後台平滑轉場動畫
+       ══════════════════════════════════════════════ */
+    body { animation: dashIn .4s cubic-bezier(.4,0,.2,1) both; }
+    @keyframes dashIn { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+
+    /* Tab 內容切換 */
+    .page-tab.active { animation: tabIn .3s cubic-bezier(.4,0,.2,1) both; }
+    @keyframes tabIn { from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);} }
+
+    /* 統計卡片 */
+    .stat-card { animation: statIn .45s cubic-bezier(.4,0,.2,1) both; transition:transform .2s ease,box-shadow .2s ease; }
+    .stat-card:hover { transform:translateY(-3px); box-shadow:0 6px 20px rgba(0,0,0,.1); }
+    .stat-card:nth-child(1){animation-delay:.05s;}.stat-card:nth-child(2){animation-delay:.1s;}
+    .stat-card:nth-child(3){animation-delay:.15s;}.stat-card:nth-child(4){animation-delay:.2s;}
+    .stat-card:nth-child(5){animation-delay:.25s;}.stat-card:nth-child(6){animation-delay:.3s;}
+    @keyframes statIn { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);} }
+
+    /* Panel */
+    .panel { transition: box-shadow .2s ease; }
+    .panel:hover { box-shadow: 0 4px 20px rgba(0,0,0,.1); }
+
+    /* 按鈕 */
+    .btn { transition: all .18s cubic-bezier(.4,0,.2,1) !important; }
+    .btn:active { transform: scale(.96) !important; }
+
+    /* 側邊欄連結 */
+    .sidebar-link { transition: all .18s cubic-bezier(.4,0,.2,1); }
+
+    /* Modal 動畫 */
+    .m-overlay.open { animation: overlayIn .25s ease both; }
+    @keyframes overlayIn { from{opacity:0;}to{opacity:1;} }
+    .m-box { animation: mboxIn .3s cubic-bezier(.34,1.56,.64,1) both; }
+    @keyframes mboxIn { from{opacity:0;transform:translateY(28px) scale(.96);}to{opacity:1;transform:translateY(0) scale(1);} }
+
+    /* 表格列 */
+    .data-table tbody tr { transition: background .15s ease; }
+
+    /* alert */
+    .alert.show { animation: alertIn .3s cubic-bezier(.4,0,.2,1) both; }
+    @keyframes alertIn { from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);} }
+
+    /* ══════════════════════════════════════════════
+       後台手機自適應
+       ══════════════════════════════════════════════ */
+
+    /* 漢堡按鈕（手機才顯示） */
+    .hamburger{display:none;position:fixed;top:12px;left:12px;z-index:300;
+      background:var(--gold);border:none;border-radius:8px;width:40px;height:40px;
+      cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+      box-shadow:0 2px 10px rgba(0,0,0,.25);}
+    .hamburger span{display:block;width:20px;height:2px;background:var(--sidebar-bg);border-radius:2px;transition:.3s;}
+    .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+    .hamburger.open span:nth-child(2){opacity:0;}
+    .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+    /* 遮罩 */
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:149;}
+    .sidebar-overlay.show{display:block;}
+
+    @media(max-width:768px){
+      .hamburger{display:flex;}
+      .sidebar{
+        transform:translateX(-100%);transition:transform .28s ease;
+        z-index:150;width:240px;
+      }
+      .sidebar.open{transform:translateX(0);}
+      .main{margin-left:0 !important;}
+      .topbar{padding:12px 14px 12px 60px;}
+      .page-title{font-size:1rem;}
+      .breadcrumb{display:none;}
+      .content{padding:16px 12px 24px;}
+
+      /* stats 卡片：2欄 */
+      .stats-grid{grid-template-columns:1fr 1fr;gap:10px;}
+      .stat-card{padding:14px 12px;}
+      .stat-icon{font-size:1.4rem;}
+      .stat-num{font-size:1.3rem;}
+      .stat-label{font-size:.7rem;}
+
+      /* 表格橫向捲動 */
+      .panel-body{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+      .data-table{min-width:600px;}
+      .data-table th,.data-table td{padding:8px 10px;font-size:.8rem;}
+
+      /* Panel header 換行 */
+      .panel-header{flex-wrap:wrap;gap:8px;}
+      .panel-title{font-size:.92rem;}
+
+      /* 表單欄位單欄 */
+      .form-row{grid-template-columns:1fr !important;}
+      .form-row [style*="grid-column"]{grid-column:1 !important;}
+      .form-group input,.form-group select,.form-group textarea{font-size:.88rem;}
+
+      /* Modal */
+      .m-box{margin:0 12px;padding:22px 16px;max-height:88vh;}
+      .m-title{font-size:1rem;}
+
+      /* form-actions 按鈕 */
+      .form-actions{flex-wrap:wrap;}
+      .btn{font-size:.82rem;padding:7px 12px;}
+
+      /* 巡堂/差勤篩選區 */
+      .panel-header > div{flex-wrap:wrap;gap:6px;}
+      .panel-header input[type=date],
+      .panel-header input[type=text],
+      .panel-header select{width:100%;font-size:.82rem;}
+    }
+
+    @media(max-width:480px){
+      .stats-grid{grid-template-columns:1fr 1fr;}
+      .topbar{padding:10px 12px 10px 54px;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- 漢堡按鈕 -->
+<button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="選單">
+  <span></span><span></span><span></span>
+</button>
+<!-- 遮罩 -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-icon">御</div>
+    <div class="sidebar-logo-text">
+      <h2>御園國小</h2>
+      <p>後台管理系統</p>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">主要功能</div>
+    <div class="sidebar-link active" onclick="showTab('dashboard',this)"><span class="icon">🏠</span> 控制台首頁</div>
+    <div class="sidebar-link" onclick="showTab('announcements',this)"><span class="icon">📢</span> 公告管理</div>
+    <div class="sidebar-link" onclick="showTab('nav',this)"><span class="icon">🔗</span> 選單按鈕</div>
+    <div class="sidebar-link" onclick="showTab('campus',this)"><span class="icon">🏫</span> 認識校園</div>
+    <div class="sidebar-section-label">系統設定</div>
+    <div class="sidebar-link" onclick="showTab('settings',this)"><span class="icon">⚙️</span> 網站設定</div>
+    <div class="sidebar-link" onclick="showTab('password',this)"><span class="icon">🔑</span> 修改密碼</div>
+    <div class="sidebar-link" onclick="window.open('/','_blank')"><span class="icon">🌐</span> 前台首頁</div>
+    <div class="sidebar-link" onclick="window.open('/news.html','_blank')"><span class="icon">📋</span> 最新消息頁</div>
+    <div class="sidebar-link" onclick="window.open('/campus.html','_blank')"><span class="icon">🌿</span> 認識校園頁</div>
+    <div class="sidebar-link" onclick="showTab('leaves',this)"><span class="icon">📋</span> 差勤管理</div>
+    <div class="sidebar-link" onclick="window.open('/leave_query.html','_blank')"><span class="icon">🎓</span> 差勤系統頁</div>
+    <div class="sidebar-link" onclick="showTab('inspections',this)"><span class="icon">🏫</span> 巡堂管理</div>
+    <div class="sidebar-link" onclick="window.open('/class_inspections.html','_blank')"><span class="icon">📝</span> 巡堂填寫頁</div>
+    <div class="sidebar-link" onclick="showTab('honors',this)"><span class="icon">🏆</span> 榮譽榜管理</div>
+    <div class="sidebar-link" onclick="window.open('/honor_board','_blank')"><span class="icon">👑</span> 榮譽榜頁面</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-badge">
+      <div class="avatar" id="sidebar-avatar">A</div>
+      <div>
+        <div id="sidebar-username" style="font-size:.82rem;color:#fff;">admin</div>
+        <div style="font-size:.68rem;opacity:.5;">系統管理員</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">⬅ 登出</button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="page-title">🏠 控制台首頁</div>
+      <div class="breadcrumb">御園國小後台 › <span id="breadcrumb-sub">首頁</span></div>
+    </div>
+    <div style="font-size:.82rem;color:var(--text-light);" id="topbar-time"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── Dashboard ── -->
+    <div class="page-tab active" id="tab-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">📢</div><div><div class="stat-num" id="stat-ann">—</div><div class="stat-label">公告數量</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🔗</div><div><div class="stat-num" id="stat-nav">—</div><div class="stat-label">選單按鈕</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🏫</div><div><div class="stat-num" id="stat-campus">—</div><div class="stat-label">校園區塊</div></div></div>
+        <div class="stat-card"><div class="stat-icon">📋</div><div><div class="stat-num" id="stat-leaves">—</div><div class="stat-label">待審核假單</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🏫</div><div><div class="stat-num" id="stat-inspections">—</div><div class="stat-label">今日巡堂記錄</div></div></div>
+        <div class="stat-card"><div class="stat-icon">🏆</div><div><div class="stat-num" id="stat-honors">—</div><div class="stat-label">榮譽榜記錄</div></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">📋 最新公告（前5筆）</div></div>
+        <div class="panel-body">
+          <table class="data-table" id="dashboard-ann-table">
+            <thead><tr><th>日期</th><th>標題</th><th>單位</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 公告管理 ── -->
+    <div class="page-tab" id="tab-announcements">
+      <div class="alert alert-success" id="ann-alert"></div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">➕ 新增公告</div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group" style="grid-column:1/-1">
+              <label>公告標題 *</label>
+              <input type="text" id="ann-title" placeholder="公告標題">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>日期 *</label>
+              <input type="date" id="ann-date">
+            </div>
+            <div class="form-group">
+              <label>發布單位</label>
+              <select id="ann-dept">
+                <option value="">無分組</option>
+                <option value="student">學務處</option>
+                <option value="academic">教務處</option>
+                <option value="general">總務處</option>
+                <option value="counseling">輔導室</option>
+                <option value="discipline">訓育組</option>
+                <option value="health">衛生組</option>
+                <option value="moral">生教組</option>
+                <option value="hr">人事處</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>公告內容 *</label>
+            <textarea id="ann-content" rows="3" placeholder="公告內容..."></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label>附加圖片（選填）</label>
+            <input type="file" id="ann-img-file" accept="image/*" onchange="previewImg('ann-img-file','ann-img-preview')">
+            <img id="ann-img-preview" class="img-preview" alt="預覽">
+            <div style="font-size:.78rem;color:var(--text-light);margin-top:4px;">圖片將上傳至 Supabase Storage / images</div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-green" onclick="addAnnouncement()">✚ 新增公告</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">📋 公告列表</div></div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table" id="ann-table">
+            <thead><tr><th>日期</th><th>標題</th><th>單位</th><th>圖片</th><th style="width:110px;">操作</th></tr></thead>
+            <tbody><tr><td colspan="5" class="empty-state">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 選單按鈕 ── -->
+    <div class="page-tab" id="tab-nav">
+      <div class="alert alert-success" id="nav-alert"></div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">➕ 新增按鈕</div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group"><label>按鈕名稱 *</label><input type="text" id="nav-name" placeholder="例：認識校園"></div>
+            <div class="form-group"><label>連結網址 *</label><input type="text" id="nav-url" placeholder="/campus.html 或 https://..."></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>上層按鈕（子選單用）</label><select id="nav-parent"><option value="">— 最上層 —</option></select></div>
+            <div class="form-group"><label>開啟方式</label><select id="nav-target"><option value="_self">同頁</option><option value="_blank">新頁</option></select></div>
+            <div class="form-group"><label>排列順序</label><input type="number" id="nav-order" value="0" min="0"></div>
+          </div>
+          <div class="form-actions"><button class="btn btn-green" onclick="addNavButton()">✚ 新增</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🔗 選單列表</div></div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table" id="nav-table">
+            <thead><tr><th>名稱</th><th>網址</th><th>上層</th><th>開啟</th><th>順序</th><th style="width:110px;">操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 認識校園 ── -->
+    <div class="page-tab" id="tab-campus">
+      <div class="alert alert-success" id="campus-alert"></div>
+      <!-- 區塊 -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">➕ 新增內容區塊</div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>區塊類型</label>
+              <select id="block-type" onchange="toggleBlockType()">
+                <option value="text">文字</option>
+                <option value="image">圖片</option>
+              </select>
+            </div>
+            <div class="form-group"><label>排列順序</label><input type="number" id="block-order" value="0" min="0"></div>
+          </div>
+          <div id="block-text-area" class="form-group" style="margin-bottom:12px;">
+            <label>文字內容</label>
+            <textarea id="block-content" rows="4" placeholder="輸入校園介紹文字..."></textarea>
+          </div>
+          <div id="block-img-area" style="display:none;" class="form-group">
+            <label>上傳圖片</label>
+            <input type="file" id="block-img-file" accept="image/*" onchange="previewImg('block-img-file','block-img-preview')">
+            <img id="block-img-preview" class="img-preview" alt="預覽">
+          </div>
+          <div class="form-actions"><button class="btn btn-green" onclick="addBlock()">✚ 新增區塊</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">📄 校園區塊列表</div></div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table" id="block-table">
+            <thead><tr><th>類型</th><th>內容預覽</th><th>順序</th><th style="width:110px;">操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- 校園按鈕 -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">➕ 新增校園按鈕</div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group"><label>按鈕名稱 *</label><input type="text" id="cb-name" placeholder="例：學校地圖"></div>
+            <div class="form-group"><label>連結網址 *</label><input type="text" id="cb-url" placeholder="/map 或 https://..."></div>
+            <div class="form-group"><label>開啟方式</label><select id="cb-target"><option value="_self">同頁</option><option value="_blank">新頁</option></select></div>
+            <div class="form-group"><label>順序</label><input type="number" id="cb-order" value="0"></div>
+          </div>
+          <div class="form-actions"><button class="btn btn-green" onclick="addCampusBtn()">✚ 新增按鈕</button></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🔗 校園按鈕列表</div></div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table" id="cb-table">
+            <thead><tr><th>名稱</th><th>網址</th><th>開啟</th><th>順序</th><th style="width:110px;">操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 網站設定 ── -->
+    <div class="page-tab" id="tab-settings">
+      <div class="alert alert-success" id="settings-alert"></div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">⚙️ 網站基本設定</div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group"><label>學校名稱</label><input type="text" id="s-title"></div>
+            <div class="form-group"><label>副標題</label><input type="text" id="s-subtitle"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>地址</label><input type="text" id="s-address"></div>
+            <div class="form-group"><label>電話</label><input type="text" id="s-phone"></div>
+            <div class="form-group"><label>信箱</label><input type="text" id="s-email"></div>
+          </div>
+          <div style="border-top:1px solid #e8ede9;margin:16px 0 14px;padding-top:14px;">
+            <div style="font-size:.82rem;font-weight:700;color:var(--green-dark);margin-bottom:10px;">🪣 Supabase 圖片上傳設定</div>
+            <div class="form-row">
+              <div class="form-group" style="grid-column:1/-1">
+                <label>Supabase URL <span style="font-weight:400;color:var(--text-light);">（例：https://xxxx.supabase.co）</span></label>
+                <input type="text" id="s-supabase-url" placeholder="https://xxxx.supabase.co">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="grid-column:1/-1">
+                <label>Supabase Service Role Key <span style="font-weight:400;color:var(--text-light);">（後台管理用，非 anon key）</span></label>
+                <input type="password" id="s-supabase-key" placeholder="eyJ...">
+              </div>
+            </div>
+          </div>
+          <div class="form-actions"><button class="btn btn-green" onclick="saveSettings()">💾 儲存</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 巡堂管理 ── -->
+    <div class="page-tab" id="tab-inspections">
+      <div class="alert alert-success" id="insp-alert"></div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">🏫 巡堂記錄列表</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="date" id="insp-filter-date" style="padding:6px 10px;border:1.5px solid #d0dbd2;border-radius:6px;font-size:.82rem;" onchange="loadInspections()">
+            <input type="text" id="insp-filter-class" placeholder="篩選班級" style="padding:6px 10px;border:1.5px solid #d0dbd2;border-radius:6px;font-size:.82rem;width:100px;" oninput="filterInspTable()">
+          </div>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table" id="insp-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>巡堂日期</th>
+                <th>班級</th>
+                <th>節次</th>
+                <th>課程</th>
+                <th>任課老師</th>
+                <th>巡堂老師</th>
+                <th>職位</th>
+                <th>分數</th>
+                <th>等級</th>
+                <th>評語</th>
+                <th style="width:70px;">操作</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="12" class="empty-state">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 差勤管理 ── -->
+    <div class="page-tab" id="tab-leaves">
+      <div class="alert alert-success" id="leaves-alert"></div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📋 請假申請列表</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select id="leave-filter" onchange="loadLeaves()" style="padding:6px 10px;border:1.5px solid #d0dbd2;border-radius:6px;font-size:.82rem;">
+              <option value="">全部狀態</option>
+              <option value="待審核">待審核</option>
+              <option value="已批准">已批准</option>
+              <option value="已駁回">已駁回</option>
+            </select>
+          </div>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table" id="leaves-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>申請時間</th>
+                <th>學號</th>
+                <th>姓名</th>
+                <th>班級</th>
+                <th>假別</th>
+                <th>日期</th>
+                <th>原因</th>
+                <th>狀態</th>
+                <th style="width:140px;">操作</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="10" class="empty-state">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 榮譽榜 ── -->
+    <div class="page-tab" id="tab-honors">
+      <div class="alert alert-success" id="honors-alert"></div>
+      <!-- 新增表單 -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">➕ 新增榮譽記錄</div></div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>獎項名稱 * <span style="font-weight:400;font-size:.75rem;color:var(--text-light);">例：模範生</span></label>
+              <input type="text" id="h-title" placeholder="輸入獎項名稱">
+            </div>
+            <div class="form-group">
+              <label>獎項類別 *</label>
+              <select id="h-category">
+                <option value="">請選擇類別</option>
+                <option value="校內活動">🏫 校內活動</option>
+                <option value="全校競賽">🏆 全校競賽</option>
+                <option value="學習表現">📚 學習表現</option>
+                <option value="全區錦標">🥇 全區錦標</option>
+                <option value="市級社團">🎭 市級社團</option>
+                <option value="全市錦標">🏅 全市錦標</option>
+                <option value="全國社團">🌟 全國社團</option>
+                <option value="全國錦標">🎖️ 全國錦標</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>得獎學生姓名 *</label>
+              <input type="text" id="h-student" placeholder="學生姓名">
+            </div>
+            <div class="form-group">
+              <label>班級 *</label>
+              <select id="h-class">
+                <option value="">請選擇班級</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>當選名稱 * <span style="font-weight:400;font-size:.75rem;color:var(--text-light);">例：模範生當選</span></label>
+              <input type="text" id="h-award" placeholder="輸入當選名稱">
+            </div>
+            <div class="form-group">
+              <label>得獎日期</label>
+              <input type="date" id="h-date">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label>補充說明 <span style="font-weight:400;font-size:.75rem;color:var(--text-light);">例：品學兼優</span></label>
+            <input type="text" id="h-desc" placeholder="補充說明（選填）">
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-green" onclick="addHonor()">✚ 新增榮譽記錄</button>
+          </div>
+        </div>
+      </div>
+      <!-- 列表 -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">🏆 榮譽記錄列表</div>
+          <select id="honor-filter" onchange="loadHonors()" style="padding:6px 10px;border:1.5px solid #d0dbd2;border-radius:6px;font-size:.82rem;">
+            <option value="">全部類別</option>
+            <option value="校內活動">校內活動</option>
+            <option value="全校競賽">全校競賽</option>
+            <option value="學習表現">學習表現</option>
+            <option value="全區錦標">全區錦標</option>
+            <option value="市級社團">市級社團</option>
+            <option value="全市錦標">全市錦標</option>
+            <option value="全國社團">全國社團</option>
+            <option value="全國錦標">全國錦標</option>
+          </select>
+        </div>
+        <div class="panel-body" style="padding:0;overflow-x:auto;">
+          <table class="data-table" id="honors-table" style="min-width:700px;">
+            <thead><tr><th>#</th><th>獎項名稱</th><th>類別</th><th>學生</th><th>班級</th><th>當選名稱</th><th>得獎日期</th><th>補充說明</th><th style="width:110px;">操作</th></tr></thead>
+            <tbody><tr><td colspan="9" class="empty-state">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 修改密碼 ── -->
+    <div class="page-tab" id="tab-password">
+      <div class="alert alert-success" id="pw-alert"></div>
+      <div class="panel" style="max-width:440px;">
+        <div class="panel-header"><div class="panel-title">🔑 修改密碼</div></div>
+        <div class="panel-body">
+          <div class="form-group" style="margin-bottom:12px;"><label>目前密碼 *</label><input type="password" id="pw-old"></div>
+          <div class="form-group" style="margin-bottom:12px;"><label>新密碼 *</label><input type="password" id="pw-new"></div>
+          <div class="form-group" style="margin-bottom:16px;"><label>確認新密碼 *</label><input type="password" id="pw-confirm"></div>
+          <button class="btn btn-green" onclick="changePassword()">🔒 更新密碼</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ── Edit 公告 Modal ── -->
+<div class="m-overlay" id="edit-ann-modal">
+  <div class="m-box">
+    <div class="m-title">✏️ 編輯公告</div>
+    <input type="hidden" id="edit-ann-id">
+    <div class="form-group" style="margin-bottom:10px;"><label>標題 *</label><input type="text" id="edit-ann-title"></div>
+    <div class="form-row">
+      <div class="form-group"><label>日期 *</label><input type="date" id="edit-ann-date"></div>
+      <div class="form-group">
+        <label>發布單位</label>
+        <select id="edit-ann-dept">
+          <option value="">無分組</option>
+          <option value="student">學務處</option>
+          <option value="academic">教務處</option>
+          <option value="general">總務處</option>
+          <option value="counseling">輔導室</option>
+          <option value="discipline">訓育組</option>
+          <option value="health">衛生組</option>
+          <option value="moral">生教組</option>
+          <option value="hr">人事處</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;"><label>內容 *</label><textarea id="edit-ann-content" rows="3"></textarea></div>
+    <div class="form-group">
+      <label>更換圖片（選填）</label>
+      <input type="file" id="edit-ann-img-file" accept="image/*" onchange="previewImg('edit-ann-img-file','edit-ann-img-preview')">
+      <img id="edit-ann-img-preview" class="img-preview" alt="預覽">
+      <div class="img-current" id="edit-ann-img-current"></div>
+    </div>
+    <div class="m-footer">
+      <button class="btn btn-red" onclick="closeModal('edit-ann-modal')">取消</button>
+      <button class="btn btn-green" onclick="saveAnnouncement()">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit 選單 Modal ── -->
+<div class="m-overlay" id="edit-nav-modal">
+  <div class="m-box">
+    <div class="m-title">✏️ 編輯按鈕</div>
+    <input type="hidden" id="edit-nav-id">
+    <div class="form-group" style="margin-bottom:10px;"><label>名稱 *</label><input type="text" id="edit-nav-name"></div>
+    <div class="form-group" style="margin-bottom:10px;"><label>網址 *</label><input type="text" id="edit-nav-url"></div>
+    <div class="form-row">
+      <div class="form-group"><label>上層按鈕</label><select id="edit-nav-parent"></select></div>
+      <div class="form-group"><label>開啟方式</label><select id="edit-nav-target"><option value="_self">同頁</option><option value="_blank">新頁</option></select></div>
+      <div class="form-group"><label>順序</label><input type="number" id="edit-nav-order" value="0"></div>
+    </div>
+    <div class="m-footer">
+      <button class="btn btn-red" onclick="closeModal('edit-nav-modal')">取消</button>
+      <button class="btn btn-green" onclick="saveNavButton()">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit 區塊 Modal ── -->
+<div class="m-overlay" id="edit-block-modal">
+  <div class="m-box">
+    <div class="m-title">✏️ 編輯區塊</div>
+    <input type="hidden" id="edit-block-id">
+    <input type="hidden" id="edit-block-type">
+    <div id="edit-block-text-area" class="form-group" style="margin-bottom:10px;">
+      <label>文字內容</label>
+      <textarea id="edit-block-content" rows="5"></textarea>
+    </div>
+    <div id="edit-block-img-area">
+      <div class="form-group" style="margin-bottom:6px;">
+        <label>更換圖片（選填）</label>
+        <input type="file" id="edit-block-img-file" accept="image/*" onchange="previewImg('edit-block-img-file','edit-block-img-preview')">
+        <img id="edit-block-img-preview" class="img-preview" alt="預覽">
+        <div class="img-current" id="edit-block-img-current"></div>
+      </div>
+    </div>
+    <div class="form-group"><label>排列順序</label><input type="number" id="edit-block-order" value="0"></div>
+    <div class="m-footer">
+      <button class="btn btn-red" onclick="closeModal('edit-block-modal')">取消</button>
+      <button class="btn btn-green" onclick="saveBlock()">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit 校園按鈕 Modal ── -->
+<div class="m-overlay" id="edit-cb-modal">
+  <div class="m-box">
+    <div class="m-title">✏️ 編輯校園按鈕</div>
+    <input type="hidden" id="edit-cb-id">
+    <div class="form-group" style="margin-bottom:10px;"><label>名稱 *</label><input type="text" id="edit-cb-name"></div>
+    <div class="form-group" style="margin-bottom:10px;"><label>網址 *</label><input type="text" id="edit-cb-url"></div>
+    <div class="form-row">
+      <div class="form-group"><label>開啟方式</label><select id="edit-cb-target"><option value="_self">同頁</option><option value="_blank">新頁</option></select></div>
+      <div class="form-group"><label>順序</label><input type="number" id="edit-cb-order" value="0"></div>
+    </div>
+    <div class="m-footer">
+      <button class="btn btn-red" onclick="closeModal('edit-cb-modal')">取消</button>
+      <button class="btn btn-green" onclick="saveCampusBtn()">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit 榮譽榜 Modal ── -->
+<div class="m-overlay" id="edit-honor-modal">
+  <div class="m-box">
+    <div class="m-title">✏️ 編輯榮譽記錄</div>
+    <input type="hidden" id="edit-h-id">
+    <div class="form-row">
+      <div class="form-group"><label>獎項名稱 *</label><input type="text" id="edit-h-title"></div>
+      <div class="form-group">
+        <label>獎項類別 *</label>
+        <select id="edit-h-category">
+          <option value="">請選擇</option>
+          <option value="校內活動">校內活動</option>
+          <option value="全校競賽">全校競賽</option>
+          <option value="學習表現">學習表現</option>
+          <option value="全區錦標">全區錦標</option>
+          <option value="市級社團">市級社團</option>
+          <option value="全市錦標">全市錦標</option>
+          <option value="全國社團">全國社團</option>
+          <option value="全國錦標">全國錦標</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>學生姓名 *</label><input type="text" id="edit-h-student"></div>
+      <div class="form-group">
+        <label>班級 *</label>
+        <select id="edit-h-class">
+          <option value="">請選擇</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>當選名稱 *</label><input type="text" id="edit-h-award"></div>
+      <div class="form-group"><label>得獎日期</label><input type="date" id="edit-h-date"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:4px;"><label>補充說明</label><input type="text" id="edit-h-desc"></div>
+    <div class="m-footer">
+      <button class="btn btn-red" onclick="closeModal('edit-honor-modal')">取消</button>
+      <button class="btn btn-green" onclick="saveHonor()">💾 儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEPT_LABELS = {
+  student:'學務處',academic:'教務處',general:'總務處',
+  counseling:'輔導室',discipline:'訓育組',health:'衛生組',
+  moral:'生教組',hr:'人事處'
+}
+
+// ── 手機側邊欄 ────────────────────────────────────────────
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar')
+  const hb=document.getElementById('hamburger')
+  const ov=document.getElementById('sidebar-overlay')
+  sb.classList.toggle('open')
+  hb.classList.toggle('open')
+  ov.classList.toggle('show')
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open')
+  document.getElementById('hamburger').classList.remove('open')
+  document.getElementById('sidebar-overlay').classList.remove('show')
+}
+// 切換 tab 時關閉側邊欄（手機）
+const _origShowTab = typeof showTab !== 'undefined' ? null : null
+
+// ── 時鐘 ──────────────────────────────────────────────────
+function updateClock() { document.getElementById('topbar-time').textContent = new Date().toLocaleString('zh-TW') }
+setInterval(updateClock, 1000); updateClock()
+document.getElementById('ann-date').value = new Date().toISOString().slice(0,10)
+
+// ── Auth ──────────────────────────────────────────────────
+async function checkAuth() {
+  const r = await fetch('/admin-api/check-auth')
+  const d = await r.json()
+  if (!d.loggedIn) { window.location.href = '/'; return }
+  document.getElementById('sidebar-username').textContent = d.username
+  document.getElementById('sidebar-avatar').textContent = d.username[0].toUpperCase()
+}
+async function doLogout() {
+  await fetch('/admin-api/logout', { method:'POST' })
+  window.location.href = '/'
+}
+
+// ── Tab 切換 ──────────────────────────────────────────────
+const tabTitles = {
+  dashboard:['🏠 控制台首頁','首頁'],
+  announcements:['📢 公告管理','公告管理'],
+  nav:['🔗 選單按鈕管理','選單按鈕'],
+  campus:['🏫 認識校園管理','認識校園'],
+  settings:['⚙️ 網站設定','網站設定'],
+  leaves:['📋 差勤管理','差勤管理'],
+  inspections:['🏫 巡堂管理','巡堂管理'],
+  honors:['🏆 榮譽榜管理','榮譽榜'],
+  password:['🔑 修改密碼','修改密碼'],
+}
+function showTab(name, el) {
+  // 移除舊 active
+  document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'))
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'))
+  // 加 active 並重觸發動畫
+  const newTab = document.getElementById('tab-'+name)
+  if (newTab) {
+    newTab.classList.add('active')
+    newTab.style.animation = 'none'
+    void newTab.offsetWidth
+    newTab.style.animation = ''
+  }
+  if (el) el.classList.add('active')
+  const [title, sub] = tabTitles[name] || ['後台','']
+  document.getElementById('page-title').textContent = title
+  document.getElementById('breadcrumb-sub').textContent = sub
+  if (name==='announcements') loadAnnouncements()
+  if (name==='nav') loadNavButtons()
+  if (name==='campus') { loadBlocks(); loadCampusBtns() }
+  if (name==='settings') loadSettings()
+  if (name==='leaves') loadLeaves()
+  if (name==='inspections') loadInspections()
+  if (name==='honors') loadHonors()
+  // 手機：切換 tab 後自動關閉側邊欄
+  if(window.innerWidth<=768) closeSidebar()
+}
+
+// ── API helper ────────────────────────────────────────────
+async function api(url, method='GET', body=null) {
+  const opts = { method, headers:{'Content-Type':'application/json'} }
+  if (body) opts.body = JSON.stringify(body)
+  const r = await fetch(url, opts)
+  return r.json()
+}
+function showAlert(id, msg, type='success') {
+  const el = document.getElementById(id)
+  el.textContent = msg; el.className = `alert alert-${type} show`
+  setTimeout(() => el.classList.remove('show'), 3500)
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open')
+  document.getElementById(id).style.display = 'none'
+  document.body.classList.remove('modal-open')
+}
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+function fmtDate(d) { return String(d||'').slice(0,10) }
+
+// ── 圖片預覽 ──────────────────────────────────────────────
+function previewImg(inputId, previewId) {
+  const file = document.getElementById(inputId).files[0]
+  const prev = document.getElementById(previewId)
+  if (!file) { prev.classList.remove('show'); return }
+  const reader = new FileReader()
+  reader.onload = e => { prev.src = e.target.result; prev.classList.add('show') }
+  reader.readAsDataURL(file)
+}
+
+// ── 上傳圖片 → Supabase ───────────────────────────────────
+async function uploadImage(inputId) {
+  const file = document.getElementById(inputId)?.files[0]
+  if (!file) return null
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = async e => {
+      const base64 = e.target.result.split(',')[1]
+      const mimeType = file.type
+      const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`
+      try {
+        const r = await api('/admin-api/upload-image', 'POST', { base64, mimeType, filename })
+        if (r.success) resolve(r.url)
+        else reject(new Error(r.message || '上傳失敗'))
+      } catch(err) { reject(err) }
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+// ── Dashboard ─────────────────────────────────────────────
+async function loadDashboard() {
+  const [ar, nr, cr, lr, ir, hr] = await Promise.all([
+    api('/admin-api/announcements'),
+    api('/admin-api/nav-buttons'),
+    api('/admin-api/campus-blocks'),
+    api('/admin-api/leaves'),
+    api('/admin-api/inspections'),
+    api('/admin-api/honors')
+  ])
+  const anns = ar.data||[]; const navs = nr.data||[]; const blocks = cr.data||[]
+  const leaves = lr.data||[]; const insps = ir.data||[]; const honors = hr.data||[]
+  document.getElementById('stat-ann').textContent = anns.length
+  document.getElementById('stat-nav').textContent = navs.length
+  document.getElementById('stat-campus').textContent = blocks.length
+  const pendingLeaves = leaves.filter(l=>l.status==='待審核').length
+  const elL = document.getElementById('stat-leaves')
+  if(elL) elL.textContent = pendingLeaves
+  const today = new Date().toISOString().slice(0,10)
+  const todayInsps = insps.filter(i=>String(i.inspection_date).slice(0,10)===today).length
+  const elI = document.getElementById('stat-inspections')
+  if(elI) elI.textContent = todayInsps
+  const elH = document.getElementById('stat-honors')
+  if(elH) elH.textContent = honors.length
+  const tbody = document.querySelector('#dashboard-ann-table tbody')
+  tbody.innerHTML = anns.slice(0,5).map(a =>
+    `<tr><td><span style="font-family:monospace;font-size:.82rem;">${fmtDate(a.date)}</span></td>
+     <td>${escH(a.title)}</td>
+     <td>${a.department ? `<span class="dept-badge">${DEPT_LABELS[a.department]||a.department}</span>` : '—'}</td></tr>`
+  ).join('') || '<tr><td colspan="3" class="empty-state">尚無公告</td></tr>'
+}
+
+// ── 公告 ──────────────────────────────────────────────────
+let _anns = []
+async function loadAnnouncements() {
+  const r = await api('/admin-api/announcements')
+  _anns = r.data || []; renderAnnTable()
+}
+function renderAnnTable() {
+  const tbody = document.querySelector('#ann-table tbody')
+  if (_anns.length===0) { tbody.innerHTML='<tr><td colspan="5" class="empty-state">尚無公告</td></tr>'; return }
+  tbody.innerHTML = _anns.map(a => `
+    <tr>
+      <td style="font-family:monospace;font-size:.82rem;">${fmtDate(a.date)}</td>
+      <td style="font-weight:600;">${escH(a.title)}</td>
+      <td>${a.department ? `<span class="dept-badge">${DEPT_LABELS[a.department]||a.department}</span>` : '—'}</td>
+      <td>${a.image_url ? `<img src="${a.image_url}" style="width:48px;height:36px;object-fit:cover;border-radius:4px;">` : '—'}</td>
+      <td>
+        <button class="btn btn-blue btn-sm" onclick="openEditAnn(${a.id})">✏️</button>
+        <button class="btn btn-red btn-sm" onclick="deleteAnn(${a.id})" style="margin-left:3px;">🗑</button>
+      </td>
+    </tr>`).join('')
+}
+async function addAnnouncement() {
+  const title = document.getElementById('ann-title').value.trim()
+  const content = document.getElementById('ann-content').value.trim()
+  const date = document.getElementById('ann-date').value
+  const dept = document.getElementById('ann-dept').value
+  if (!title||!content||!date) { showAlert('ann-alert','請填寫所有必填欄位','error'); return }
+  let image_url = null
+  try {
+    image_url = await uploadImage('ann-img-file')
+  } catch(e) { showAlert('ann-alert','圖片上傳失敗：'+e.message,'error'); return }
+  const r = await api('/admin-api/announcements','POST',{title,content,date,department:dept||null,image_url})
+  if (r.success) {
+    showAlert('ann-alert','✅ 公告已新增！')
+    document.getElementById('ann-title').value=''
+    document.getElementById('ann-content').value=''
+    document.getElementById('ann-img-file').value=''
+    document.getElementById('ann-img-preview').classList.remove('show')
+    loadAnnouncements()
+  }
+}
+function openEditAnn(id) {
+  const a = _anns.find(x=>Number(x.id)===Number(id)); if (!a) return
+  document.getElementById('edit-ann-id').value = a.id
+  document.getElementById('edit-ann-title').value = a.title
+  document.getElementById('edit-ann-date').value = fmtDate(a.date)
+  document.getElementById('edit-ann-content').value = a.content
+  document.getElementById('edit-ann-dept').value = a.department||''
+  document.getElementById('edit-ann-img-file').value = ''
+  document.getElementById('edit-ann-img-preview').classList.remove('show')
+  const cur = document.getElementById('edit-ann-img-current')
+  cur.innerHTML = a.image_url ? `目前圖片：<img src="${a.image_url}" alt="">` : '目前無圖片'
+  document.getElementById('edit-ann-modal').classList.add('open')
+  document.body.classList.add('modal-open')
+}
+async function saveAnnouncement() {
+  const id = document.getElementById('edit-ann-id').value
+  const title = document.getElementById('edit-ann-title').value.trim()
+  const date = document.getElementById('edit-ann-date').value
+  const content = document.getElementById('edit-ann-content').value.trim()
+  const dept = document.getElementById('edit-ann-dept').value
+  const existing = _anns.find(x=>Number(x.id)===Number(id))
+  let image_url = existing?.image_url || null
+  try {
+    const uploaded = await uploadImage('edit-ann-img-file')
+    if (uploaded) image_url = uploaded
+  } catch(e) { showAlert('ann-alert','圖片上傳失敗：'+e.message,'error'); return }
+  await api('/admin-api/announcements/'+id,'PUT',{title,content,date,department:dept||null,image_url})
+  closeModal('edit-ann-modal')
+  showAlert('ann-alert','✅ 公告已更新！')
+  loadAnnouncements()
+}
+async function deleteAnn(id) {
+  if (!confirm('確定刪除此公告？')) return
+  await api('/admin-api/announcements/'+Number(id),'DELETE')
+  showAlert('ann-alert','🗑 公告已刪除')
+  loadAnnouncements()
+}
+
+// ── 選單按鈕 ──────────────────────────────────────────────
+let _navs = []
+async function loadNavButtons() {
+  const r = await api('/admin-api/nav-buttons')
+  _navs = r.data || []; renderNavTable(); populateParentSelects()
+}
+function renderNavTable() {
+  const tbody = document.querySelector('#nav-table tbody')
+  if (_navs.length===0) { tbody.innerHTML='<tr><td colspan="6" class="empty-state">尚無按鈕</td></tr>'; return }
+  tbody.innerHTML = _navs.map(n => {
+    const parent = _navs.find(x=>x.id===n.parent_id)
+    return `<tr>
+      <td style="font-weight:600;">${n.parent_id?'&nbsp;↳ ':''}${escH(n.name)}</td>
+      <td style="font-size:.8rem;color:var(--text-light);">${escH(n.url)}</td>
+      <td>${parent?`<span class="badge badge-gold">${escH(parent.name)}</span>`:'<span class="badge badge-green">主選單</span>'}</td>
+      <td><span class="badge badge-green">${n.target==='_blank'?'新頁':'同頁'}</span></td>
+      <td>${n.sort_order}</td>
+      <td>
+        <button class="btn btn-blue btn-sm" onclick="openEditNav(${n.id})">✏️</button>
+        <button class="btn btn-red btn-sm" onclick="deleteNav(${n.id})" style="margin-left:3px;">🗑</button>
+      </td></tr>`
+  }).join('')
+}
+function populateParentSelects() {
+  const parents = _navs.filter(n=>!n.parent_id)
+  const opts = '<option value="">— 最上層 —</option>'+parents.map(n=>`<option value="${n.id}">${escH(n.name)}</option>`).join('')
+  document.getElementById('nav-parent').innerHTML = opts
+  document.getElementById('edit-nav-parent').innerHTML = opts
+}
+async function addNavButton() {
+  const name=document.getElementById('nav-name').value.trim()
+  const url=document.getElementById('nav-url').value.trim()
+  const parent_id=document.getElementById('nav-parent').value||null
+  const sort_order=parseInt(document.getElementById('nav-order').value)||0
+  const target=document.getElementById('nav-target').value
+  if (!name||!url) { showAlert('nav-alert','請填寫名稱與網址','error'); return }
+  await api('/admin-api/nav-buttons','POST',{name,url,parent_id,sort_order,target})
+  showAlert('nav-alert','✅ 按鈕已新增！')
+  document.getElementById('nav-name').value=''
+  document.getElementById('nav-url').value=''
+  loadNavButtons()
+}
+function openEditNav(id) {
+  const n=_navs.find(x=>x.id===id); if(!n) return
+  document.getElementById('edit-nav-id').value=n.id
+  document.getElementById('edit-nav-name').value=n.name
+  document.getElementById('edit-nav-url').value=n.url
+  document.getElementById('edit-nav-order').value=n.sort_order
+  document.getElementById('edit-nav-target').value=n.target||'_self'
+  populateParentSelects()
+  document.getElementById('edit-nav-parent').value=n.parent_id||''
+  document.getElementById('edit-nav-modal').classList.add('open')
+  document.body.classList.add('modal-open')
+}
+async function saveNavButton() {
+  const id=document.getElementById('edit-nav-id').value
+  const name=document.getElementById('edit-nav-name').value.trim()
+  const url=document.getElementById('edit-nav-url').value.trim()
+  const parent_id=document.getElementById('edit-nav-parent').value||null
+  const sort_order=parseInt(document.getElementById('edit-nav-order').value)||0
+  const target=document.getElementById('edit-nav-target').value
+  if(!name||!url) return
+  await api('/admin-api/nav-buttons/'+id,'PUT',{name,url,parent_id,sort_order,target})
+  closeModal('edit-nav-modal'); showAlert('nav-alert','✅ 按鈕已更新！'); loadNavButtons()
+}
+async function deleteNav(id) {
+  if(!confirm('確定刪除？子按鈕也會刪除。')) return
+  await api('/admin-api/nav-buttons/'+id,'DELETE')
+  showAlert('nav-alert','🗑 已刪除'); loadNavButtons()
+}
+
+// ── Campus 區塊 ───────────────────────────────────────────
+let _blocks = []
+function toggleBlockType() {
+  const t=document.getElementById('block-type').value
+  document.getElementById('block-text-area').style.display=t==='text'?'flex':'none'
+  document.getElementById('block-img-area').style.display=t==='image'?'block':'none'
+}
+async function loadBlocks() {
+  const r=await api('/admin-api/campus-blocks')
+  _blocks=r.data||[]; renderBlockTable()
+}
+function renderBlockTable() {
+  const tbody=document.querySelector('#block-table tbody')
+  if(_blocks.length===0){tbody.innerHTML='<tr><td colspan="4" class="empty-state">尚無區塊</td></tr>';return}
+  tbody.innerHTML=_blocks.map(b=>`
+    <tr>
+      <td><span class="badge badge-${b.type==='text'?'green':'gold'}">${b.type==='text'?'📝 文字':'🖼 圖片'}</span></td>
+      <td style="font-size:.82rem;color:var(--text-light);max-width:280px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">
+        ${b.type==='text'?escH((b.content||'').slice(0,60)):b.image_url?`<img src="${b.image_url}" style="width:60px;height:40px;object-fit:cover;border-radius:4px;">` : '（無圖片）'}
+      </td>
+      <td>${b.sort_order}</td>
+      <td>
+        <button class="btn btn-blue btn-sm" onclick="openEditBlock(${b.id})">✏️</button>
+        <button class="btn btn-red btn-sm" onclick="deleteBlock(${b.id})" style="margin-left:3px;">🗑</button>
+      </td>
+    </tr>`).join('')
+}
+async function addBlock() {
+  const type=document.getElementById('block-type').value
+  const sort_order=parseInt(document.getElementById('block-order').value)||0
+  let content=null, image_url=null
+  if(type==='text') {
+    content=document.getElementById('block-content').value.trim()
+    if(!content){showAlert('campus-alert','請填寫文字內容','error');return}
+  } else {
+    try { image_url=await uploadImage('block-img-file') }
+    catch(e){showAlert('campus-alert','圖片上傳失敗：'+e.message,'error');return}
+    if(!image_url){showAlert('campus-alert','請選擇圖片','error');return}
+  }
+  await api('/admin-api/campus-blocks','POST',{type,content,image_url,sort_order})
+  showAlert('campus-alert','✅ 區塊已新增！')
+  document.getElementById('block-content').value=''
+  document.getElementById('block-img-file').value=''
+  document.getElementById('block-img-preview').classList.remove('show')
+  loadBlocks()
+}
+function openEditBlock(id) {
+  const b=_blocks.find(x=>x.id===id); if(!b) return
+  document.getElementById('edit-block-id').value=b.id
+  document.getElementById('edit-block-type').value=b.type
+  document.getElementById('edit-block-order').value=b.sort_order
+  document.getElementById('edit-block-content').value=b.content||''
+  document.getElementById('edit-block-img-file').value=''
+  document.getElementById('edit-block-img-preview').classList.remove('show')
+  const cur=document.getElementById('edit-block-img-current')
+  cur.innerHTML=b.image_url?`目前圖片：<img src="${b.image_url}" alt="">` : ''
+  document.getElementById('edit-block-text-area').style.display=b.type==='text'?'flex':'none'
+  document.getElementById('edit-block-img-area').style.display=b.type==='image'?'block':'none'
+  document.getElementById('edit-block-modal').classList.add('open')
+  document.body.classList.add('modal-open')
+}
+async function saveBlock() {
+  const id=document.getElementById('edit-block-id').value
+  const type=document.getElementById('edit-block-type').value
+  const sort_order=parseInt(document.getElementById('edit-block-order').value)||0
+  const existing=_blocks.find(x=>String(x.id)===String(id))
+  let content=existing?.content||null, image_url=existing?.image_url||null
+  if(type==='text') content=document.getElementById('edit-block-content').value.trim()
+  else {
+    try { const up=await uploadImage('edit-block-img-file'); if(up) image_url=up }
+    catch(e){showAlert('campus-alert','圖片上傳失敗','error');return}
+  }
+  await api('/admin-api/campus-blocks/'+id,'PUT',{type,content,image_url,sort_order})
+  closeModal('edit-block-modal'); showAlert('campus-alert','✅ 區塊已更新！'); loadBlocks()
+}
+async function deleteBlock(id) {
+  if(!confirm('確定刪除此區塊？')) return
+  await api('/admin-api/campus-blocks/'+id,'DELETE')
+  showAlert('campus-alert','🗑 已刪除'); loadBlocks()
+}
+
+// ── Campus 按鈕 ───────────────────────────────────────────
+let _cbtns = []
+async function loadCampusBtns() {
+  const r=await api('/admin-api/campus-buttons')
+  _cbtns=r.data||[]; renderCbTable()
+}
+function renderCbTable() {
+  const tbody=document.querySelector('#cb-table tbody')
+  if(_cbtns.length===0){tbody.innerHTML='<tr><td colspan="5" class="empty-state">尚無按鈕</td></tr>';return}
+  tbody.innerHTML=_cbtns.map(b=>`
+    <tr>
+      <td style="font-weight:600;">${escH(b.name)}</td>
+      <td style="font-size:.8rem;color:var(--text-light);">${escH(b.url)}</td>
+      <td><span class="badge badge-green">${b.target==='_blank'?'新頁':'同頁'}</span></td>
+      <td>${b.sort_order}</td>
+      <td>
+        <button class="btn btn-blue btn-sm" onclick="openEditCb(${b.id})">✏️</button>
+        <button class="btn btn-red btn-sm" onclick="deleteCb(${b.id})" style="margin-left:3px;">🗑</button>
+      </td>
+    </tr>`).join('')
+}
+async function addCampusBtn() {
+  const name=document.getElementById('cb-name').value.trim()
+  const url=document.getElementById('cb-url').value.trim()
+  const target=document.getElementById('cb-target').value
+  const sort_order=parseInt(document.getElementById('cb-order').value)||0
+  if(!name||!url){showAlert('campus-alert','請填寫名稱與網址','error');return}
+  await api('/admin-api/campus-buttons','POST',{name,url,target,sort_order})
+  showAlert('campus-alert','✅ 按鈕已新增！')
+  document.getElementById('cb-name').value=''
+  document.getElementById('cb-url').value=''
+  loadCampusBtns()
+}
+function openEditCb(id) {
+  const b=_cbtns.find(x=>x.id===id); if(!b) return
+  document.getElementById('edit-cb-id').value=b.id
+  document.getElementById('edit-cb-name').value=b.name
+  document.getElementById('edit-cb-url').value=b.url
+  document.getElementById('edit-cb-target').value=b.target||'_self'
+  document.getElementById('edit-cb-order').value=b.sort_order
+  document.getElementById('edit-cb-modal').classList.add('open')
+  document.body.classList.add('modal-open')
+}
+async function saveCampusBtn() {
+  const id=document.getElementById('edit-cb-id').value
+  const name=document.getElementById('edit-cb-name').value.trim()
+  const url=document.getElementById('edit-cb-url').value.trim()
+  const target=document.getElementById('edit-cb-target').value
+  const sort_order=parseInt(document.getElementById('edit-cb-order').value)||0
+  await api('/admin-api/campus-buttons/'+id,'PUT',{name,url,target,sort_order})
+  closeModal('edit-cb-modal'); showAlert('campus-alert','✅ 按鈕已更新！'); loadCampusBtns()
+}
+async function deleteCb(id) {
+  if(!confirm('確定刪除？')) return
+  await api('/admin-api/campus-buttons/'+id,'DELETE')
+  showAlert('campus-alert','🗑 已刪除'); loadCampusBtns()
+}
+
+// ── 網站設定 ──────────────────────────────────────────────
+async function loadSettings() {
+  const r=await api('/admin-api/settings')
+  const s=r.data||{}
+  document.getElementById('s-title').value=s.site_title||''
+  document.getElementById('s-subtitle').value=s.site_subtitle||''
+  document.getElementById('s-address').value=s.site_address||''
+  document.getElementById('s-phone').value=s.site_phone||''
+  document.getElementById('s-email').value=s.site_email||''
+  document.getElementById('s-supabase-url').value=s.supabase_url||''
+  document.getElementById('s-supabase-key').value=s.supabase_service_key||''
+}
+async function saveSettings() {
+  const body = {
+    site_title:document.getElementById('s-title').value,
+    site_subtitle:document.getElementById('s-subtitle').value,
+    site_address:document.getElementById('s-address').value,
+    site_phone:document.getElementById('s-phone').value,
+    site_email:document.getElementById('s-email').value,
+    supabase_url:document.getElementById('s-supabase-url').value.trim(),
+  }
+  const keyVal = document.getElementById('s-supabase-key').value.trim()
+  if (keyVal) body.supabase_service_key = keyVal
+  await api('/admin-api/settings','POST', body)
+  showAlert('settings-alert','✅ 設定已儲存！')
+}
+
+// ── 修改密碼 ──────────────────────────────────────────────
+async function changePassword() {
+  const oldPassword=document.getElementById('pw-old').value
+  const newPassword=document.getElementById('pw-new').value
+  const confirm=document.getElementById('pw-confirm').value
+  if(!oldPassword||!newPassword){showAlert('pw-alert','請填寫所有欄位','error');return}
+  if(newPassword!==confirm){showAlert('pw-alert','新密碼與確認不符','error');return}
+  if(newPassword.length<6){showAlert('pw-alert','新密碼至少6個字元','error');return}
+  const r=await api('/admin-api/change-password','POST',{oldPassword,newPassword})
+  if(r.success){
+    showAlert('pw-alert','✅ 密碼已更新！')
+    document.getElementById('pw-old').value=''
+    document.getElementById('pw-new').value=''
+    document.getElementById('pw-confirm').value=''
+  } else { showAlert('pw-alert',r.message||'更新失敗','error') }
+}
+
+// ── Modal overlay 點外側關閉 ──────────────────────────────
+document.querySelectorAll('.m-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open') })
+})
+
+// ── 巡堂管理 ──────────────────────────────────────────────
+let _inspections = []
+function getGrade(s) {
+  if(s>=90) return {label:'優等',style:'background:#dcfce7;color:#15803d;'}
+  if(s>=80) return {label:'良好',style:'background:#dbeafe;color:#1d4ed8;'}
+  if(s>=70) return {label:'普通',style:'background:#fef9c3;color:#854d0e;'}
+  return {label:'待改善',style:'background:#fee2e2;color:#b91c1c;'}
+}
+async function loadInspections() {
+  try {
+    const r = await api('/admin-api/inspections')
+    _inspections = r.data || []
+    // 今日數字
+    const today = new Date().toISOString().slice(0,10)
+    const todayCount = _inspections.filter(i => String(i.inspection_date).slice(0,10) === today).length
+    const el = document.getElementById('stat-inspections')
+    if(el) el.textContent = todayCount
+    filterInspTable()
+  } catch(e) { console.error(e) }
+}
+function filterInspTable() {
+  const dateFilter  = document.getElementById('insp-filter-date')?.value || ''
+  const classFilter = (document.getElementById('insp-filter-class')?.value || '').trim()
+  let data = _inspections
+  if(dateFilter) data = data.filter(i => String(i.inspection_date).slice(0,10) === dateFilter)
+  if(classFilter) data = data.filter(i => i.class_name.includes(classFilter))
+  renderInspTable(data)
+}
+function renderInspTable(data) {
+  const tbody = document.querySelector('#insp-table tbody')
+  if(!data||data.length===0){
+    tbody.innerHTML='<tr><td colspan="12" class="empty-state">目前沒有巡堂記錄</td></tr>'; return
+  }
+  tbody.innerHTML = data.map(i => {
+    const g = getGrade(i.score)
+    return `<tr>
+      <td style="font-size:.78rem;color:var(--text-light);">#${i.id}</td>
+      <td style="font-family:monospace;font-size:.82rem;white-space:nowrap;">${fmtDate(i.inspection_date)}</td>
+      <td style="font-weight:600;">${escH(i.class_name)}</td>
+      <td><span class="badge badge-gold">${escH(i.period||'—')}</span></td>
+      <td style="font-size:.85rem;">${escH(i.subject||'—')}</td>
+      <td style="font-size:.85rem;">${escH(i.subject_teacher||'—')}</td>
+      <td style="font-size:.85rem;">${escH(i.teacher_name)}</td>
+      <td><span class="badge badge-green">${escH(i.inspector_position||'—')}</span></td>
+      <td style="font-weight:700;font-size:1rem;color:var(--green-dark);">${i.score}</td>
+      <td><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700;${g.style}">${g.label}</span></td>
+      <td style="font-size:.82rem;max-width:140px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="${escH(i.comment||'')}">${escH(i.comment||'—')}</td>
+      <td><button class="btn btn-red btn-sm" onclick="deleteInspection(${i.id})">🗑</button></td>
+    </tr>`
+  }).join('')
+}
+async function deleteInspection(id) {
+  if(!confirm('確定刪除此巡堂記錄？')) return
+  await api('/admin-api/inspections/'+id,'DELETE')
+  showAlert('insp-alert','🗑 已刪除')
+  loadInspections()
+}
+
+// ── 差勤管理 ──────────────────────────────────────────────
+let _leaves = []
+const LEAVE_STATUS_STYLE = {
+  '待審核': 'background:#fef9c3;color:#854d0e;',
+  '已批准': 'background:#dcfce7;color:#15803d;',
+  '已駁回': 'background:#fee2e2;color:#b91c1c;',
+}
+function fmtDT(d) {
+  if (!d) return '—'
+  return String(d).slice(0,16).replace('T',' ')
+}
+async function loadLeaves() {
+  const filter = document.getElementById('leave-filter')?.value || ''
+  const pool_url = '/admin-api/leaves'
+  try {
+    const r = await api(pool_url)
+    _leaves = (r.data || []).filter(l => !filter || l.status === filter)
+    renderLeavesTable()
+    // 更新待審核數字
+    const pending = (r.data || []).filter(l => l.status === '待審核').length
+    const el = document.getElementById('stat-leaves')
+    if (el) el.textContent = pending
+  } catch(e) { console.error(e) }
+}
+function renderLeavesTable() {
+  const tbody = document.querySelector('#leaves-table tbody')
+  if (_leaves.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-state">目前沒有請假紀錄</td></tr>'
+    return
+  }
+  tbody.innerHTML = _leaves.map(l => {
+    const style = LEAVE_STATUS_STYLE[l.status] || ''
+    const isPending = l.status === '待審核'
+    return `<tr>
+      <td style="font-size:.78rem;color:var(--text-light);">#${l.id}</td>
+      <td style="font-size:.78rem;white-space:nowrap;">${fmtDT(l.created_at)}</td>
+      <td style="font-family:monospace;">${l.student_id}</td>
+      <td style="font-weight:600;">${escH(l.name)}</td>
+      <td>${escH(l.class)}</td>
+      <td><span class="badge badge-green">${escH(l.leave_type)}</span></td>
+      <td style="font-size:.82rem;white-space:nowrap;">${fmtDate(l.start_date)}<br>${fmtDate(l.end_date)}</td>
+      <td style="font-size:.82rem;max-width:160px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;" title="${escH(l.reason)}">${escH(l.reason)}</td>
+      <td><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700;${style}">${l.status}</span></td>
+      <td>
+        ${isPending ? `
+          <button class="btn btn-green btn-sm" onclick="approveLeave(${l.id})" style="margin-right:3px;">✅ 批准</button>
+          <button class="btn btn-red btn-sm" onclick="rejectLeave(${l.id})">❌ 駁回</button>
+        ` : `<span style="font-size:.78rem;color:var(--text-light);">${fmtDT(l.review_time)}</span>`}
+      </td>
+    </tr>`
+  }).join('')
+}
+async function approveLeave(id) {
+  if (!confirm('確定批准此請假申請？')) return
+  await api('/admin-api/leaves/' + id + '/approve', 'PUT')
+  showAlert('leaves-alert', '✅ 已批准')
+  loadLeaves()
+}
+async function rejectLeave(id) {
+  if (!confirm('確定駁回此請假申請？')) return
+  await api('/admin-api/leaves/' + id + '/reject', 'PUT')
+  showAlert('leaves-alert', '🚫 已駁回')
+  loadLeaves()
+}
+
+// ── 榮譽榜 ────────────────────────────────────────────────
+let _honors = []
+
+// 建立班級下拉
+;(function(){
+  ['h-class','edit-h-class'].forEach(id=>{
+    const sel=document.getElementById(id)
+    if(!sel) return
+    for(let g=1;g<=6;g++) for(let cl=1;cl<=7;cl++){
+      const o=document.createElement('option')
+      o.value=o.textContent=`${g}年${cl}班`
+      sel.appendChild(o)
+    }
+  })
+})()
+
+async function loadHonors(){
+  const filter = document.getElementById('honor-filter')?.value||''
+  try{
+    const r=await api('/admin-api/honors')
+    _honors=(r.data||[]).filter(h=>!filter||h.category===filter)
+    renderHonorsTable()
+    const elH=document.getElementById('stat-honors')
+    if(elH) elH.textContent=(r.data||[]).length
+  }catch(e){console.error(e)}
+}
+function renderHonorsTable(){
+  const tbody=document.querySelector('#honors-table tbody')
+  if(!_honors.length){tbody.innerHTML='<tr><td colspan="9" class="empty-state">目前沒有榮譽記錄</td></tr>';return}
+  tbody.innerHTML=_honors.map(h=>`<tr>
+    <td style="font-size:.75rem;color:var(--text-light);">#${h.id}</td>
+    <td style="font-weight:600;">${escH(h.title)}</td>
+    <td><span class="badge badge-gold">${escH(h.category)}</span></td>
+    <td>${escH(h.student_name)}</td>
+    <td>${escH(h.class_name)}</td>
+    <td style="font-size:.85rem;">${escH(h.award)}</td>
+    <td style="font-family:monospace;font-size:.82rem;">${fmtDate(h.award_date)}</td>
+    <td style="font-size:.82rem;color:var(--text-light);max-width:120px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${escH(h.description||'—')}</td>
+    <td>
+      <button class="btn btn-blue btn-sm" onclick="openEditHonor(${h.id})">✏️</button>
+      <button class="btn btn-red btn-sm" onclick="deleteHonor(${h.id})" style="margin-left:3px;">🗑</button>
+    </td>
+  </tr>`).join('')
+}
+async function addHonor(){
+  const title=document.getElementById('h-title').value.trim()
+  const category=document.getElementById('h-category').value
+  const student_name=document.getElementById('h-student').value.trim()
+  const class_name=document.getElementById('h-class').value
+  const award=document.getElementById('h-award').value.trim()
+  const description=document.getElementById('h-desc').value.trim()
+  const award_date=document.getElementById('h-date').value
+  if(!title||!category||!student_name||!class_name||!award){showAlert('honors-alert','請填寫所有必填欄位','error');return}
+  const r=await api('/admin-api/honors','POST',{title,category,student_name,class_name,award,description:description||null,award_date:award_date||null})
+  if(r.success){
+    showAlert('honors-alert','✅ 榮譽記錄已新增！')
+    document.getElementById('h-title').value=''
+    document.getElementById('h-student').value=''
+    document.getElementById('h-class').value=''
+    document.getElementById('h-award').value=''
+    document.getElementById('h-desc').value=''
+    document.getElementById('h-date').value=''
+    loadHonors()
+  } else { showAlert('honors-alert',r.message||'新增失敗','error') }
+}
+function openEditHonor(id){
+  const h=_honors.find(x=>Number(x.id)===Number(id));if(!h) return
+  document.getElementById('edit-h-id').value=h.id
+  document.getElementById('edit-h-title').value=h.title||''
+  document.getElementById('edit-h-category').value=h.category||''
+  document.getElementById('edit-h-student').value=h.student_name||''
+  document.getElementById('edit-h-class').value=h.class_name||''
+  document.getElementById('edit-h-award').value=h.award||''
+  document.getElementById('edit-h-desc').value=h.description||''
+  document.getElementById('edit-h-date').value=fmtDate(h.award_date)
+  document.getElementById('edit-honor-modal').classList.add('open')
+  document.body.classList.add('modal-open')
+}
+async function saveHonor(){
+  const id=document.getElementById('edit-h-id').value
+  const title=document.getElementById('edit-h-title').value.trim()
+  const category=document.getElementById('edit-h-category').value
+  const student_name=document.getElementById('edit-h-student').value.trim()
+  const class_name=document.getElementById('edit-h-class').value
+  const award=document.getElementById('edit-h-award').value.trim()
+  const description=document.getElementById('edit-h-desc').value.trim()
+  const award_date=document.getElementById('edit-h-date').value
+  if(!title||!category||!student_name||!class_name||!award) return
+  await api('/admin-api/honors/'+id,'PUT',{title,category,student_name,class_name,award,description:description||null,award_date:award_date||null})
+  closeModal('edit-honor-modal')
+  showAlert('honors-alert','✅ 已更新！')
+  loadHonors()
+}
+async function deleteHonor(id){
+  if(!confirm('確定刪除此榮譽記錄？')) return
+  await api('/admin-api/honors/'+id,'DELETE')
+  showAlert('honors-alert','🗑 已刪除')
+  loadHonors()
+}
+
+// ── Init ──────────────────────────────────────────────────
+checkAuth().then(() => loadDashboard())
+</script>
+</body>
+</html>
