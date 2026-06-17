@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>線上巡堂系統 - 御園國小</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --indigo:#312e81;--indigo-mid:#4f46e5;--indigo-light:#6366f1;
+      --indigo-pale:#eef2ff;--gold:#f59e0b;--green:#16a34a;--red:#dc2626;
+      --white:#fff;--gray:#f8fafc;--border:#e2e8f0;
+      --text:#1e293b;--text-light:#64748b;
+      --radius:12px;--shadow:0 4px 24px rgba(79,70,229,.10);
+      --font:'Noto Sans TC','Microsoft JhengHei',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font);background:var(--gray);color:var(--text);min-height:100vh;}
+
+    /* Nav */
+    .top-nav{background:var(--indigo);color:#fff;padding:14px 32px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+    .nav-logo{width:38px;height:38px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px;color:var(--indigo);flex-shrink:0;}
+    .nav-title{font-size:1rem;font-weight:700;letter-spacing:1px;}
+    .nav-back{margin-left:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:6px 16px;border-radius:20px;font-size:.82rem;cursor:pointer;text-decoration:none;transition:.2s;}
+    .nav-back:hover{background:rgba(255,255,255,.22);}
+
+    /* Landing */
+    #page-landing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 60px);padding:40px 20px;text-align:center;}
+    .landing-card{background:var(--white);border-radius:20px;padding:56px 48px;max-width:520px;width:100%;box-shadow:0 8px 48px rgba(79,70,229,.13);}
+    .landing-icon{font-size:4rem;margin-bottom:20px;line-height:1;}
+    .landing-title{font-size:1.9rem;font-weight:700;color:var(--indigo);margin-bottom:8px;font-family:'Noto Serif TC',serif;letter-spacing:2px;}
+    .landing-sub{color:var(--text-light);font-size:.95rem;margin-bottom:32px;line-height:1.7;}
+    .landing-features{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;}
+    .feature-item{background:var(--indigo-pale);border-radius:10px;padding:14px 12px;font-size:.85rem;color:var(--indigo);}
+    .feature-item .fi{font-size:1.3rem;display:block;margin-bottom:4px;}
+    .btn-start{background:linear-gradient(135deg,var(--indigo-mid),var(--indigo));color:#fff;border:none;padding:16px 48px;border-radius:40px;font-size:1.05rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(79,70,229,.35);transition:.2s;width:100%;letter-spacing:1px;}
+    .btn-start:hover{transform:translateY(-2px);}
+
+    /* App */
+    #page-app{display:none;padding:28px 20px 60px;}
+    .app-wrap{max-width:720px;margin:0 auto;}
+
+    /* Card */
+    .card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;margin-bottom:20px;}
+    .card-title{font-size:1.1rem;font-weight:700;color:var(--indigo);margin-bottom:20px;display:flex;align-items:center;gap:8px;padding-bottom:14px;border-bottom:2px solid var(--indigo-pale);}
+
+    /* Form */
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .form-grid .full{grid-column:1/-1;}
+    .fg{display:flex;flex-direction:column;gap:6px;}
+    .fg label{font-size:.82rem;font-weight:700;color:var(--text);letter-spacing:.3px;}
+    .fg label .req{color:var(--red);margin-left:2px;}
+    .fg input,.fg select,.fg textarea{padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.92rem;font-family:var(--font);outline:none;transition:.2s;background:var(--white);}
+    .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--indigo-light);box-shadow:0 0 0 3px rgba(99,102,241,.1);}
+    .fg textarea{resize:vertical;min-height:80px;}
+
+    /* Score */
+    .score-wrap{position:relative;}
+    .score-display{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-weight:700;font-size:1rem;pointer-events:none;}
+    .score-input{-webkit-appearance:none;appearance:none;height:8px;border-radius:4px;outline:none;padding:0;border:none !important;box-shadow:none !important;cursor:pointer;width:100%;}
+    .score-track{display:flex;align-items:center;gap:12px;margin-top:6px;}
+    .score-track input[type=range]{flex:1;-webkit-appearance:none;height:6px;border-radius:3px;outline:none;border:none;padding:0;cursor:pointer;}
+    .score-track input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--indigo-mid);cursor:pointer;box-shadow:0 2px 6px rgba(79,70,229,.4);}
+    .score-val{font-size:1.2rem;font-weight:700;color:var(--indigo-mid);min-width:48px;text-align:center;background:var(--indigo-pale);padding:4px 10px;border-radius:6px;}
+
+    /* Alert */
+    .alert{padding:12px 16px;border-radius:8px;font-size:.88rem;margin-bottom:16px;display:none;}
+    .alert.show{display:flex;align-items:flex-start;gap:8px;}
+    .alert-success{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;}
+    .alert-error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;}
+
+    .btn-submit{width:100%;margin-top:20px;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--indigo-mid),var(--indigo));color:#fff;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(79,70,229,.3);transition:.2s;}
+    .btn-submit:hover{transform:translateY(-1px);}
+    .btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+    /* 分數等級顏色 */
+    .score-grade{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:700;}
+    .grade-a{background:#dcfce7;color:#15803d;}
+    .grade-b{background:#dbeafe;color:#1d4ed8;}
+    .grade-c{background:#fef9c3;color:#854d0e;}
+    .grade-d{background:#fee2e2;color:#b91c1c;}
+
+    @media(max-width:768px){
+      .top-nav{padding:12px 14px;}
+      .nav-title{font-size:.88rem;}
+    }
+    @media(max-width:600px){
+      .form-grid{grid-template-columns:1fr;}
+      .form-grid .full{grid-column:1;}
+      .landing-card{padding:28px 18px;}
+      .landing-features{grid-template-columns:1fr 1fr;}
+      .landing-title{font-size:1.5rem;}
+      #page-app{padding:14px 10px 40px;}
+      .card{padding:18px 14px;}
+      .score-track{flex-direction:column;align-items:stretch;gap:8px;}
+      .score-val{text-align:center;}
+    }
+    @media(max-width:400px){
+      .landing-features{grid-template-columns:1fr;}
+    }
+  </style>
+  <style>
+    body{animation:pageIn .45s cubic-bezier(.4,0,.2,1) both;}
+    @keyframes pageIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+    a{transition:color .2s ease,opacity .2s ease;}
+    button{transition:all .2s cubic-bezier(.4,0,.2,1);}
+    button:active{transform:scale(.97);}
+  </style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-logo">御</div>
+  <div class="nav-title">線上巡堂系統</div>
+  <a href="/" class="nav-back">← 返回首頁</a>
+</nav>
+
+<!-- Landing -->
+<div id="page-landing">
+  <div class="landing-card">
+    <div class="landing-icon">🏫</div>
+    <div class="landing-title">線上巡堂系統</div>
+    <div class="landing-sub">御園國小教師巡堂記錄平台<br>快速填寫巡堂結果，數位化管理班級狀況</div>
+    <div class="landing-features">
+      <div class="feature-item"><span class="fi">📝</span>快速填寫記錄</div>
+      <div class="feature-item"><span class="fi">⭐</span>評分與評語</div>
+      <div class="feature-item"><span class="fi">📊</span>後台統計管理</div>
+      <div class="feature-item"><span class="fi">📅</span>歷史記錄查詢</div>
+    </div>
+    <button class="btn-start" onclick="startApp()">開始填寫巡堂記錄 →</button>
+  </div>
+</div>
+
+<!-- App -->
+<div id="page-app">
+  <div class="app-wrap">
+    <div class="card">
+      <div class="card-title">📝 填寫巡堂記錄</div>
+
+      <div class="alert alert-success" id="form-success">
+        <span>✅</span><span id="success-msg"></span>
+      </div>
+      <div class="alert alert-error" id="form-error">
+        <span>⚠️</span><span id="error-msg"></span>
+      </div>
+
+      <div class="form-grid">
+        <div class="fg">
+          <label>巡堂班級<span class="req">*</span></label>
+          <select id="f-class">
+            <option value="">請選擇班級</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>巡堂日期<span class="req">*</span></label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="fg">
+          <label>第幾節課<span class="req">*</span></label>
+          <select id="f-period">
+            <option value="">請選擇節次</option>
+            <option value="第1節">第 1 節</option>
+            <option value="第2節">第 2 節</option>
+            <option value="第3節">第 3 節</option>
+            <option value="第4節">第 4 節</option>
+            <option value="第5節">第 5 節</option>
+            <option value="第6節">第 6 節</option>
+            <option value="第7節">第 7 節</option>
+            <option value="第8節">第 8 節</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>課程名稱<span class="req">*</span></label>
+          <input type="text" id="f-subject" placeholder="例：數學、國語、英文...">
+        </div>
+        <div class="fg">
+          <label>任課老師<span class="req">*</span></label>
+          <input type="text" id="f-subject-teacher" placeholder="請輸入任課老師姓名">
+        </div>
+        <div class="fg">
+          <label>巡堂老師<span class="req">*</span></label>
+          <input type="text" id="f-teacher" placeholder="請輸入巡堂老師姓名">
+        </div>
+        <div class="fg">
+          <label>巡堂老師職位<span class="req">*</span></label>
+          <select id="f-position">
+            <option value="">請選擇職位</option>
+            <option value="校長">校長</option>
+            <option value="副校長">副校長</option>
+            <option value="主任">主任</option>
+            <option value="老師">老師</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>班級分數<span class="req">*</span> &nbsp;<span id="grade-label" class="score-grade grade-a">優等</span></label>
+          <div class="score-track">
+            <input type="range" id="f-score" min="0" max="100" value="90" oninput="updateScore(this.value)">
+            <div class="score-val" id="score-val">90</div>
+          </div>
+        </div>
+        <div class="fg full">
+          <label>巡堂評語</label>
+          <textarea id="f-comment" rows="3" placeholder="請填寫班級狀況、學生表現等觀察..."></textarea>
+        </div>
+      </div>
+
+      <button class="btn-submit" id="btn-submit" onclick="submitInspection()">📤 送出巡堂記錄</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 建立班級下拉
+(function(){
+  const sel = document.getElementById('f-class')
+  for(let g=1;g<=6;g++) for(let c=1;c<=7;c++){
+    const o = document.createElement('option')
+    o.value = o.textContent = `${g}年${c}班`
+    sel.appendChild(o)
+  }
+})()
+
+document.getElementById('f-date').value = new Date().toISOString().slice(0,10)
+
+function startApp(){
+  document.getElementById('page-landing').style.display = 'none'
+  document.getElementById('page-app').style.display = 'block'
+}
+
+// 分數滑桿
+function updateScore(v){
+  v = Number(v)
+  document.getElementById('score-val').textContent = v
+  const gl = document.getElementById('grade-label')
+  const track = document.getElementById('f-score')
+  let grade, cls, color
+  if(v>=90){grade='優等';cls='grade-a';color='#16a34a'}
+  else if(v>=80){grade='良好';cls='grade-b';color='#1d4ed8'}
+  else if(v>=70){grade='普通';cls='grade-c';color='#854d0e'}
+  else{grade='待改善';cls='grade-d';color='#b91c1c'}
+  gl.textContent=grade; gl.className='score-grade '+cls
+  track.style.background=`linear-gradient(to right,${color} ${v}%,#e2e8f0 ${v}%)`
+}
+updateScore(90)
+
+async function submitInspection(){
+  const class_name         = document.getElementById('f-class').value
+  const inspection_date    = document.getElementById('f-date').value
+  const period             = document.getElementById('f-period').value
+  const subject            = document.getElementById('f-subject').value.trim()
+  const subject_teacher    = document.getElementById('f-subject-teacher').value.trim()
+  const teacher_name       = document.getElementById('f-teacher').value.trim()
+  const inspector_position = document.getElementById('f-position').value
+  const score              = Number(document.getElementById('f-score').value)
+  const comment            = document.getElementById('f-comment').value.trim()
+
+  hideAlerts()
+  if(!class_name||!inspection_date||!period||!subject||!subject_teacher||!teacher_name||!inspector_position){
+    showError('請填寫所有必填欄位（含節次、課程名稱、任課老師、職位）'); return
+  }
+
+  const btn=document.getElementById('btn-submit')
+  btn.disabled=true; btn.textContent='送出中...'
+  try{
+    const res=await fetch('/api/inspections',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({class_name,teacher_name,score,comment,inspection_date,
+                           period,subject,subject_teacher,inspector_position})
+    })
+    const data=await res.json()
+    if(data.success){
+      showSuccess(`巡堂記錄已送出！（${class_name} ${period} ${subject} · ${teacher_name}${inspector_position} · ${score}分）`)
+      document.getElementById('f-class').value=''
+      document.getElementById('f-period').value=''
+      document.getElementById('f-subject').value=''
+      document.getElementById('f-subject-teacher').value=''
+      document.getElementById('f-teacher').value=''
+      document.getElementById('f-position').value=''
+      document.getElementById('f-comment').value=''
+      document.getElementById('f-score').value=90
+      updateScore(90)
+    } else { showError(data.message||'送出失敗') }
+  } catch(e){ showError('網路錯誤，請稍後再試') }
+  finally{ btn.disabled=false; btn.textContent='📤 送出巡堂記錄' }
+}
+
+function showError(msg){ document.getElementById('error-msg').textContent=msg; document.getElementById('form-error').classList.add('show') }
+function showSuccess(msg){ document.getElementById('success-msg').textContent=msg; document.getElementById('form-success').classList.add('show') }
+function hideAlerts(){ document.getElementById('form-error').classList.remove('show'); document.getElementById('form-success').classList.remove('show') }
+</script>
+</body>
+</html>
