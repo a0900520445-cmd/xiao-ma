@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>找不到頁面 - 御園國小</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green-dark: #1a5c3a;
+      --green-mid: #2e8b57;
+      --green-light: #4caf50;
+      --green-pale: #e8f5e9;
+      --gold: #f5b400;
+      --text-dark: #1a2b1f;
+      --text-mid: #3d5a46;
+      --text-light: #6b8f71;
+      --white: #ffffff;
+      --font-title: 'Noto Serif TC', serif;
+      --font-body: 'Noto Sans TC', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { overflow-x: hidden; width: 100%; }
+    body {
+      font-family: var(--font-body);
+      background: linear-gradient(160deg, var(--green-pale) 0%, #c8e6c9 45%, #a5d6a7 100%);
+      color: var(--text-dark);
+      min-height: 100vh;
+      width: 100%;
+      overflow-x: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      animation: pageIn .5s ease both;
+    }
+    @keyframes pageIn { from{opacity:0;} to{opacity:1;} }
+
+    /* 背景裝飾葉子 */
+    .bg-leaf {
+      position: fixed;
+      font-size: 14rem;
+      opacity: .06;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(1px);
+    }
+    .bg-leaf.l1 { top: -40px; left: -40px; transform: rotate(-15deg); }
+    .bg-leaf.l2 { bottom: -60px; right: -50px; transform: rotate(20deg); }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 560px;
+      width: 100%;
+    }
+
+    /* 404 數字 + 校徽風格圖示 */
+    .error-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--white), var(--green-pale));
+      box-shadow: 0 12px 40px rgba(26,92,58,.18);
+      margin-bottom: 28px;
+      animation: floatBadge 3.5s ease-in-out infinite;
+      position: relative;
+    }
+    @keyframes floatBadge {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(3deg); }
+    }
+    .error-badge .icon { font-size: 3.4rem; line-height: 1; }
+    .error-badge::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px dashed rgba(46,139,87,.3);
+      animation: spinSlow 16s linear infinite;
+    }
+    @keyframes spinSlow { to { transform: rotate(360deg); } }
+
+    .error-code {
+      font-family: var(--font-title);
+      font-size: 5.5rem;
+      font-weight: 900;
+      color: var(--green-dark);
+      line-height: 1;
+      letter-spacing: 4px;
+      margin-bottom: 8px;
+      text-shadow: 0 4px 20px rgba(26,92,58,.15);
+    }
+    .error-code span { color: var(--gold); }
+
+    .error-title {
+      font-family: var(--font-title);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--green-dark);
+      margin-bottom: 14px;
+      letter-spacing: 1px;
+    }
+
+    .error-desc {
+      font-size: .98rem;
+      color: var(--text-mid);
+      line-height: 1.8;
+      margin-bottom: 8px;
+    }
+    .error-path {
+      display: inline-block;
+      background: rgba(255,255,255,.6);
+      border: 1px solid rgba(46,139,87,.2);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-family: 'Courier New', monospace;
+      font-size: .85rem;
+      color: var(--green-dark);
+      margin: 10px 0 32px;
+      word-break: break-all;
+      max-width: 100%;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--green-dark);
+      color: var(--white);
+      padding: 14px 32px;
+      border-radius: 40px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: all .25s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 6px 20px rgba(26,92,58,.3);
+    }
+    .btn-home:hover {
+      background: var(--green-mid);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(26,92,58,.4);
+    }
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      color: var(--green-dark);
+      border: 1.5px solid var(--green-mid);
+      padding: 14px 32px;
+      border-radius: 40px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all .25s cubic-bezier(.4,0,.2,1);
+    }
+    .btn-back:hover {
+      background: var(--green-pale);
+      transform: translateY(-3px);
+    }
+
+    .footer-hint {
+      margin-top: 40px;
+      font-size: .82rem;
+      color: var(--text-light);
+    }
+    .footer-hint a { color: var(--green-mid); text-decoration: none; font-weight: 600; }
+    .footer-hint a:hover { text-decoration: underline; }
+
+    @media (max-width: 480px) {
+      .error-code { font-size: 4rem; }
+      .error-title { font-size: 1.3rem; }
+      .error-badge { width: 96px; height: 96px; }
+      .error-badge .icon { font-size: 2.6rem; }
+      .btn-group { flex-direction: column; width: 100%; }
+      .btn-home, .btn-back { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-leaf l1">🌿</div>
+<div class="bg-leaf l2">🍃</div>
+
+<div class="container">
+  <div class="error-badge"><span class="icon">🧭</span></div>
+
+  <div class="error-code">4<span>0</span>4</div>
+  <div class="error-title">迷路了嗎？這裡沒有這個頁面</div>
+  <p class="error-desc">您要找的頁面可能已經移動、刪除，或網址有打字誤差。</p>
+  <div class="error-path" id="error-path"></div>
+
+  <div class="btn-group">
+    <a href="/" class="btn-home">🏠 返回首頁</a>
+    <a href="javascript:history.back()" class="btn-back">← 上一頁</a>
+  </div>
+
+  <p class="footer-hint">如果您認為這是系統錯誤，歡迎透過<a href="/#info">聯絡資訊</a>通知學校</p>
+</div>
+
+<script>
+  // 顯示使用者輸入的錯誤網址路徑
+  document.getElementById('error-path').textContent = window.location.pathname
+</script>
+</body>
+</html>
