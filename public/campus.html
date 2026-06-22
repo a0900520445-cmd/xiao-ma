@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>認識校園 - 御園國小</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a5c3a">
+  <style>
+    body{animation:pageIn .45s cubic-bezier(.4,0,.2,1) both;}
+    @keyframes pageIn{from{opacity:0;}to{opacity:1;}}
+    a{transition:color .2s ease,opacity .2s ease;}
+    button{transition:all .2s cubic-bezier(.4,0,.2,1);}
+    button:active{transform:scale(.97);}
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-top">
+    <a class="logo-area" href="/">
+      <div class="logo-icon">御</div>
+      <div class="logo-text">
+        <h1 id="site-title">御園國小</h1>
+        <p id="site-subtitle">學習、成長、創造未來</p>
+      </div>
+    </a>
+    <div class="header-actions">
+      <button class="btn-push-toggle" id="push-toggle-btn" onclick="togglePushSubscription()">🔕 開啟推播通知</button>
+      <div class="notif-wrap">
+        <button class="btn-notif" onclick="toggleNotifPanel()" aria-label="通知">
+          🔔<span class="notif-badge" id="notif-badge" style="display:none;">0</span>
+        </button>
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-panel-header">
+            <span>📬 最新通知</span>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <div class="notif-empty">載入中...</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-login-header" onclick="openLoginModal()">🔐 後台管理</button>
+    </div>
+  </div>
+  <nav><ul class="main-nav" id="main-nav"><li class="nav-item"><a href="#" class="nav-link">載入中...</a></li></ul></nav>
+</header>
+
+<section class="hero" style="padding:40px 32px;">
+  <h2>🏫 認識校園</h2>
+  <p>探索御園國小的美麗校園環境與豐富設施</p>
+</section>
+
+<div class="campus-page">
+  <div class="campus-blocks" id="campus-blocks">
+    <div class="no-announcements">載入中...</div>
+  </div>
+  <div id="campus-btns-wrap" style="display:none;">
+    <h3 class="section-title" style="margin-bottom:16px;">🔗 相關連結</h3>
+    <div class="campus-btns" id="campus-btns"></div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h4>御園國小</h4>
+      <p class="site-address"></p>
+      <p>電話：<span class="site-phone"></span></p>
+      <p>信箱：<span class="site-email"></span></p>
+    </div>
+    <div class="footer-col">
+      <h4>快速連結</h4>
+      <a href="/">首頁</a>
+      <a href="/news.html">最新消息</a>
+      <a href="/campus.html">認識校園</a>
+    </div>
+  </div>
+  <div class="footer-bottom"><p>© 2026 御園國小 版權所有</p></div>
+</footer>
+
+<div class="modal-overlay" id="login-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;align-items:center;justify-content:center;overflow:hidden;z-index:9999;">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeLoginModal()">✕</button>
+    <div class="modal-title">🔐 後台登入</div>
+    <div class="modal-subtitle">請輸入管理員帳號密碼以進入後台</div>
+    <div class="msg-error" id="login-error"></div>
+    <div class="form-group">
+      <label for="username">帳號 *</label>
+      <input type="text" id="username" placeholder="請輸入帳號" required>
+    </div>
+    <div class="form-group">
+      <label for="password">密碼 *</label>
+      <input type="password" id="password" placeholder="請輸入密碼" required>
+    </div>
+    <button class="btn-submit" onclick="doLogin()">登入後台</button>
+    <div class="login-or">或</div>
+    <button class="btn-guest" onclick="closeLoginModal()">不登入，繼續瀏覽網站</button>
+  </div>
+</div>
+
+<script src="/js/main.js"></script>
+<script>
+async function loadCampus() {
+  try {
+    const [blocksRes, btnsRes] = await Promise.all([
+      fetch('/api/campus-blocks'),
+      fetch('/api/campus-buttons')
+    ])
+    const blocks = (await blocksRes.json()).data || []
+    const btns   = (await btnsRes.json()).data  || []
+
+    const blocksEl = document.getElementById('campus-blocks')
+    if (blocks.length === 0) {
+      blocksEl.innerHTML = '<div class="no-announcements">校園介紹內容尚未建立，請至後台新增。</div>'
+    } else {
+      blocksEl.innerHTML = blocks.map(b => {
+        if (b.type === 'text') {
+          return `<div class="campus-block-text">${b.content || ''}</div>`
+        } else if (b.type === 'image') {
+          return `<div class="campus-block-img"><img src="${b.image_url}" alt="校園照片" loading="lazy"></div>`
+        }
+        return ''
+      }).join('')
+    }
+
+    if (btns.length > 0) {
+      document.getElementById('campus-btns-wrap').style.display = 'block'
+      document.getElementById('campus-btns').innerHTML = btns.map(b =>
+        `<a href="${b.url}" class="campus-btn" target="${b.target}">🔗 ${b.name}</a>`
+      ).join('')
+    }
+  } catch(e) {
+    console.error(e)
+    document.getElementById('campus-blocks').innerHTML = '<div class="no-announcements">載入失敗</div>'
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadCampus()
+})
+</script>
+</body>
+</html>
