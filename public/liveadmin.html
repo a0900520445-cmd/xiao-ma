@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>直播後台 - 御園國小</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#16181c; --panel:#1f2227; --border:#2c2f36;
+      --text:#e8e9ec; --text-dim:#8a8d94;
+      --green:#2e8b57; --green-light:#4caf50;
+      --red:#e5484d; --gold:#f5b400;
+      --font:'Noto Sans TC',sans-serif;
+      --radius:10px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{overflow-x:hidden;width:100%;}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;width:100%;overflow-x:hidden;}
+
+    .top-nav{
+      background:var(--panel);border-bottom:1px solid var(--border);
+      padding:14px 24px;display:flex;align-items:center;gap:12px;
+    }
+    .nav-logo{width:34px;height:34px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px;color:#1a1a1a;flex-shrink:0;}
+    .nav-title{font-size:.95rem;font-weight:700;}
+    .nav-back{margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:6px 14px;border-radius:20px;font-size:.8rem;cursor:pointer;text-decoration:none;transition:.2s;}
+    .nav-back:hover{border-color:var(--text-dim);color:var(--text);}
+
+    .wrap{max-width:980px;margin:0 auto;padding:28px 20px 60px;}
+
+    /* 狀態列 */
+    .status-bar{
+      display:flex;align-items:center;gap:10px;
+      background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+      padding:14px 18px;margin-bottom:20px;
+    }
+    .status-dot{width:9px;height:9px;border-radius:50%;background:var(--text-dim);flex-shrink:0;}
+    .status-dot.live{background:var(--red);animation:pulse 1.4s ease infinite;}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+    .status-text{font-size:.88rem;color:var(--text-dim);}
+    .status-text.live{color:var(--red);font-weight:700;}
+    .viewer-count{margin-left:auto;font-size:.82rem;color:var(--text-dim);display:flex;align-items:center;gap:5px;}
+
+    /* 預覽畫面 */
+    .preview-wrap{
+      background:#000;border-radius:var(--radius);overflow:hidden;
+      aspect-ratio:16/9;margin-bottom:20px;position:relative;
+      border:1px solid var(--border);
+    }
+    #preview-video{width:100%;height:100%;object-fit:contain;display:block;}
+    .preview-empty{
+      position:absolute;inset:0;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:8px;color:var(--text-dim);
+    }
+    .preview-empty .icon{font-size:2.4rem;opacity:.5;}
+    .preview-empty .txt{font-size:.85rem;}
+
+    /* 控制面板 */
+    .panel{
+      background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+      padding:20px;margin-bottom:16px;
+    }
+    .panel-title{font-size:.82rem;font-weight:700;color:var(--text-dim);margin-bottom:14px;letter-spacing:.5px;}
+
+    .source-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+
+    .quality-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;}
+    .quality-btn{
+      background:#262930;border:1.5px solid var(--border);border-radius:8px;
+      color:var(--text);font-family:var(--font);font-size:.82rem;font-weight:600;
+      padding:11px 4px;cursor:pointer;transition:all .15s ease;
+    }
+    .quality-btn:hover{border-color:var(--green-light);}
+    .quality-btn.active{border-color:var(--green-light);background:rgba(76,175,80,.15);color:var(--green-light);}
+    .source-btn{
+      display:flex;align-items:center;gap:10px;
+      background:#262930;border:1.5px solid var(--border);border-radius:8px;
+      padding:14px 16px;cursor:pointer;transition:all .15s ease;
+      color:var(--text);font-family:var(--font);font-size:.88rem;font-weight:600;
+    }
+    .source-btn:hover{border-color:var(--green-light);background:#2a2e36;}
+    .source-btn.active{border-color:var(--green-light);background:rgba(76,175,80,.1);}
+    .source-btn .icon{font-size:1.3rem;}
+
+    .obs-row{
+      background:#262930;border:1.5px solid var(--border);border-radius:8px;
+      padding:14px 16px;margin-bottom:14px;
+    }
+    .obs-row-label{font-size:.85rem;font-weight:600;margin-bottom:10px;}
+    .obs-select-wrap{display:flex;gap:8px;}
+    .obs-select-wrap select{
+      flex:1;background:#1a1c20;border:1.5px solid var(--border);border-radius:6px;
+      color:var(--text);font-family:var(--font);font-size:.85rem;
+      padding:9px 12px;cursor:pointer;outline:none;
+    }
+    .obs-select-wrap select:focus{border-color:var(--green-light);}
+    .btn-refresh-devices{
+      background:#1a1c20;border:1.5px solid var(--border);border-radius:6px;
+      color:var(--text);font-size:1rem;width:40px;cursor:pointer;transition:.15s;flex-shrink:0;
+    }
+    .btn-refresh-devices:hover{border-color:var(--green-light);}
+
+    .toggle-row{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 2px;border-top:1px solid var(--border);
+    }
+    .toggle-row:first-child{border-top:none;}
+    .toggle-label{font-size:.88rem;display:flex;align-items:center;gap:8px;}
+    .toggle-switch{
+      position:relative;width:42px;height:24px;flex-shrink:0;
+    }
+    .toggle-switch input{opacity:0;width:0;height:0;}
+    .toggle-slider{
+      position:absolute;inset:0;background:#3a3d44;border-radius:24px;cursor:pointer;transition:.2s;
+    }
+    .toggle-slider::before{
+      content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;
+      background:#fff;border-radius:50%;transition:.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider{background:var(--green);}
+    .toggle-switch input:checked + .toggle-slider::before{transform:translateX(18px);}
+
+    .action-row{display:flex;gap:12px;margin-top:18px;}
+    .btn-go-live{
+      flex:1;background:var(--red);color:#fff;border:none;border-radius:8px;
+      padding:14px;font-size:.95rem;font-weight:700;cursor:pointer;
+      transition:.2s;letter-spacing:.5px;
+    }
+    .btn-go-live:hover{background:#c73e42;}
+    .btn-go-live:disabled{background:#3a3d44;color:var(--text-dim);cursor:not-allowed;}
+    .btn-end-live{
+      flex:1;background:transparent;border:1.5px solid var(--border);color:var(--text);
+      border-radius:8px;padding:14px;font-size:.95rem;font-weight:700;cursor:pointer;transition:.2s;
+    }
+    .btn-end-live:hover{border-color:var(--red);color:var(--red);}
+
+    .hint{font-size:.78rem;color:var(--text-dim);margin-top:10px;line-height:1.6;}
+
+    @media(max-width:600px){
+      .wrap{padding:18px 14px 40px;}
+      .source-grid{grid-template-columns:1fr;}
+      .quality-grid{grid-template-columns:repeat(3,1fr);}
+      .action-row{flex-direction:column;}
+    }
+  </style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-logo">御</div>
+  <span class="nav-title">直播後台</span>
+  <a href="/admin/dashboard.html" class="nav-back">← 返回後台</a>
+</nav>
+
+<div class="wrap">
+
+  <div class="status-bar">
+    <span class="status-dot" id="status-dot"></span>
+    <span class="status-text" id="status-text">尚未開始直播</span>
+    <span class="viewer-count" id="viewer-count" style="display:none;">👁 <span id="viewer-num">0</span> 人觀看</span>
+  </div>
+
+  <div class="preview-wrap">
+    <video id="preview-video" autoplay muted playsinline></video>
+    <div class="preview-empty" id="preview-empty">
+      <div class="icon">📹</div>
+      <div class="txt">選擇畫面來源後即可預覽</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">直播畫質</div>
+    <div class="quality-grid" id="quality-grid">
+      <button class="quality-btn" data-q="480" onclick="selectQuality(this)">480p</button>
+      <button class="quality-btn" data-q="720" onclick="selectQuality(this)">720p</button>
+      <button class="quality-btn active" data-q="1080" onclick="selectQuality(this)">1080p</button>
+      <button class="quality-btn" data-q="1440" onclick="selectQuality(this)">1440p</button>
+      <button class="quality-btn" data-q="2160" onclick="selectQuality(this)">4K</button>
+    </div>
+    <div class="hint" id="quality-hint">畫質越高越清晰，但需要更穩定、更高速的網路才能避免直播中途模糊或卡頓。若觀眾端常常變模糊，請調低畫質。</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">畫面來源</div>
+    <div class="source-grid">
+      <button class="source-btn" id="btn-screen" onclick="selectScreen()">
+        <span class="icon">🖥️</span> 共享電腦畫面
+      </button>
+      <button class="source-btn" id="btn-camera" onclick="selectCamera()">
+        <span class="icon">📷</span> 開啟鏡頭畫面
+      </button>
+    </div>
+
+    <div class="obs-row" id="obs-row">
+      <div class="obs-row-label">🎬 連接 OBS（透過虛擬攝影機）</div>
+      <div class="obs-select-wrap">
+        <select id="device-select" onchange="selectDeviceCamera()">
+          <option value="">選擇視訊裝置...</option>
+        </select>
+        <button class="btn-refresh-devices" onclick="loadDevices()" title="重新偵測裝置">🔄</button>
+      </div>
+      <div class="hint" style="margin-top:8px;">先在 OBS 點選「工具 → 啟動虛擬攝影機」，再回到這裡點重新偵測，於下拉選單選擇「OBS Virtual Camera」即可把 OBS 畫面當作直播來源。</div>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">🎤 麥克風聲音</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="audio-toggle" checked onchange="toggleAudio()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-go-live" id="btn-go-live" onclick="goLive()" disabled>🔴 開始直播</button>
+      <button class="btn-end-live" id="btn-end-live" onclick="endLive()" style="display:none;">結束直播</button>
+    </div>
+
+    <div class="hint">提示：共享螢幕時瀏覽器會跳出選取視窗，請選擇要分享的畫面。觀眾請至「最新消息」分類或直接開啟 /live 觀看。</div>
+  </div>
+
+</div>
+
+<script>
+let localStream = null
+let ws = null
+let peers = new Map() // viewerId -> RTCPeerConnection
+let isLive = false
+let currentSource = null // 'screen' | 'camera'
+
+const ICE_SERVERS = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+
+function updateStatus(live) {
+  isLive = live
+  const dot = document.getElementById('status-dot')
+  const text = document.getElementById('status-text')
+  const viewerCount = document.getElementById('viewer-count')
+  const goBtn = document.getElementById('btn-go-live')
+  const endBtn = document.getElementById('btn-end-live')
+
+  if (live) {
+    dot.classList.add('live')
+    text.classList.add('live')
+    text.textContent = '直播中'
+    viewerCount.style.display = 'flex'
+    goBtn.style.display = 'none'
+    endBtn.style.display = 'block'
+  } else {
+    dot.classList.remove('live')
+    text.classList.remove('live')
+    text.textContent = '尚未開始直播'
+    viewerCount.style.display = 'none'
+    goBtn.style.display = 'block'
+    endBtn.style.display = 'none'
+  }
+}
+
+// ── 畫質選擇 ──────────────────────────────────────────────
+const QUALITY_PRESETS = {
+  480:  { width: 854,  height: 480,  frameRate: 30 },
+  720:  { width: 1280, height: 720,  frameRate: 30 },
+  1080: { width: 1920, height: 1080, frameRate: 30 },
+  1440: { width: 2560, height: 1440, frameRate: 30 },
+  2160: { width: 3840, height: 2160, frameRate: 30 },
+}
+let currentQuality = 1080
+
+function selectQuality(btn) {
+  document.querySelectorAll('.quality-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  currentQuality = parseInt(btn.dataset.q)
+  // 若目前已有畫面來源，重新套用新畫質（不需要使用者再選一次來源）
+  if (currentSource === 'screen') selectScreen()
+  else if (currentSource === 'camera') selectCamera()
+  else if (currentSource === 'device') selectDeviceCamera()
+}
+
+function getVideoConstraints() {
+  const preset = QUALITY_PRESETS[currentQuality]
+  return {
+    width:  { ideal: preset.width  },
+    height: { ideal: preset.height },
+    frameRate: { ideal: preset.frameRate }
+  }
+}
+
+async function selectScreen() {
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: getVideoConstraints(),
+      audio: false
+    })
+    await applyStream(stream, 'screen')
+  } catch (e) {
+    console.log('使用者取消選取畫面或發生錯誤', e)
+  }
+}
+
+async function selectCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: getVideoConstraints(),
+      audio: false
+    })
+    await applyStream(stream, 'camera')
+  } catch (e) {
+    alert('無法開啟鏡頭，請確認已授權瀏覽器使用相機，或該畫質超出鏡頭支援範圍')
+  }
+}
+
+// ── OBS 虛擬攝影機（透過裝置選單）──────────────────────────
+async function loadDevices() {
+  try {
+    // 先取得一次權限，否則 enumerateDevices 看不到裝置名稱
+    const tempStream = await navigator.mediaDevices.getUserMedia({ video: true })
+    tempStream.getTracks().forEach(t => t.stop())
+
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const videoInputs = devices.filter(d => d.kind === 'videoinput')
+    const select = document.getElementById('device-select')
+    select.innerHTML = '<option value="">選擇視訊裝置...</option>'
+    videoInputs.forEach(d => {
+      const opt = document.createElement('option')
+      opt.value = d.deviceId
+      opt.textContent = d.label || '未命名裝置'
+      // 自動標示看起來像 OBS 虛擬攝影機的裝置
+      if (/obs/i.test(d.label)) opt.textContent += ' ⭐ 偵測為 OBS'
+      select.appendChild(opt)
+    })
+  } catch (e) {
+    alert('無法偵測裝置，請確認已授權瀏覽器使用攝影機')
+  }
+}
+
+async function selectDeviceCamera() {
+  const deviceId = document.getElementById('device-select').value
+  if (!deviceId) return
+  try {
+    const constraints = getVideoConstraints()
+    constraints.deviceId = { exact: deviceId }
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: constraints,
+      audio: false
+    })
+    await applyStream(stream, 'device')
+    document.getElementById('btn-screen').classList.remove('active')
+    document.getElementById('btn-camera').classList.remove('active')
+  } catch (e) {
+    alert('無法開啟此裝置，請確認該裝置目前可用，或該畫質超出裝置支援範圍（OBS 虛擬攝影機需先在 OBS 內啟動）')
+  }
+}
+
+// 頁面載入時嘗試先列出裝置（若尚未授權，名稱會顯示為空，需按重新偵測）
+navigator.mediaDevices?.enumerateDevices().then(devices => {
+  const videoInputs = devices.filter(d => d.kind === 'videoinput')
+  if (videoInputs.length > 0 && videoInputs[0].label) loadDevices()
+}).catch(() => {})
+
+async function applyStream(videoStream, source) {
+  // 加上麥克風音軌（若有開啟）
+  const audioEnabled = document.getElementById('audio-toggle').checked
+  let finalStream = videoStream
+  if (audioEnabled) {
+    try {
+      const micStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      micStream.getAudioTracks().forEach(track => finalStream.addTrack(track))
+    } catch (e) {
+      console.log('無法取得麥克風', e)
+    }
+  }
+
+  // 若已有舊串流，先停止
+  if (localStream) {
+    localStream.getTracks().forEach(t => t.stop())
+  }
+  localStream = finalStream
+  currentSource = source
+
+  const video = document.getElementById('preview-video')
+  video.srcObject = localStream
+  document.getElementById('preview-empty').style.display = 'none'
+
+  document.getElementById('btn-screen').classList.toggle('active', source === 'screen')
+  document.getElementById('btn-camera').classList.toggle('active', source === 'camera')
+  document.getElementById('btn-go-live').disabled = false
+
+  // 若正在直播中切換來源（或畫質），更新所有現有連線的視訊軌與位元率
+  if (isLive) {
+    const targetBitrate = BITRATE_PRESETS[currentQuality] || BITRATE_PRESETS[1080]
+    peers.forEach(async (pc) => {
+      const videoTrack = localStream.getVideoTracks()[0]
+      const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video')
+      if (sender && videoTrack) {
+        await sender.replaceTrack(videoTrack)
+        const params = sender.getParameters()
+        if (!params.encodings) params.encodings = [{}]
+        params.encodings[0].maxBitrate = targetBitrate
+        params.encodings[0].minBitrate = Math.round(targetBitrate * 0.4)
+        try { await sender.setParameters(params) } catch (e) {}
+      }
+    })
+  }
+
+  // 螢幕分享被使用者手動停止時的處理
+  videoStream.getVideoTracks()[0].onended = () => {
+    document.getElementById('preview-empty').style.display = 'flex'
+    document.getElementById('btn-screen').classList.remove('active')
+    document.getElementById('btn-camera').classList.remove('active')
+  }
+}
+
+function toggleAudio() {
+  if (!localStream) return
+  const enabled = document.getElementById('audio-toggle').checked
+  localStream.getAudioTracks().forEach(t => t.enabled = enabled)
+}
+
+function connectSignaling() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  ws = new WebSocket(`${protocol}//${window.location.host}/live-ws`)
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'broadcaster-join' }))
+  }
+
+  ws.onmessage = async (event) => {
+    const msg = JSON.parse(event.data)
+
+    if (msg.type === 'viewer-joined') {
+      await createPeerForViewer(msg.viewerId)
+      updateViewerCount()
+    }
+
+    if (msg.type === 'viewer-left') {
+      const pc = peers.get(msg.viewerId)
+      if (pc) { pc.close(); peers.delete(msg.viewerId) }
+      updateViewerCount()
+    }
+
+    if (msg.type === 'answer') {
+      const pc = peers.get(msg.viewerId)
+      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(msg.sdp))
+    }
+
+    if (msg.type === 'ice-candidate') {
+      const pc = peers.get(msg.viewerId)
+      if (pc && msg.candidate) {
+        try { await pc.addIceCandidate(new RTCIceCandidate(msg.candidate)) } catch (e) {}
+      }
+    }
+  }
+
+  ws.onclose = () => {
+    if (isLive) {
+      // 嘗試重連
+      setTimeout(connectSignaling, 2000)
+    }
+  }
+}
+
+// 各畫質對應的目標位元率（bps），避免 WebRTC 自動降畫質降到太低
+const BITRATE_PRESETS = {
+  480:  1_200_000,
+  720:  2_500_000,
+  1080: 4_500_000,
+  1440: 8_000_000,
+  2160: 16_000_000,
+}
+
+async function createPeerForViewer(viewerId) {
+  const pc = new RTCPeerConnection(ICE_SERVERS)
+  peers.set(viewerId, pc)
+
+  if (localStream) {
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream))
+  }
+
+  // 設定位元率上限/下限：避免網路稍有波動就被自動降到很低畫質
+  const videoSender = pc.getSenders().find(s => s.track && s.track.kind === 'video')
+  if (videoSender) {
+    const params = videoSender.getParameters()
+    if (!params.encodings) params.encodings = [{}]
+    const targetBitrate = BITRATE_PRESETS[currentQuality] || BITRATE_PRESETS[1080]
+    params.encodings[0].maxBitrate = targetBitrate
+    // 設定最低位元率門檻為目標值的 40%，網路變差時畫質下降有限度，而非無限制崩壞
+    params.encodings[0].minBitrate = Math.round(targetBitrate * 0.4)
+    try { await videoSender.setParameters(params) } catch (e) { console.log('設定位元率失敗', e) }
+  }
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate) {
+      ws.send(JSON.stringify({ type: 'ice-candidate', targetId: viewerId, candidate: e.candidate }))
+    }
+  }
+
+  const offer = await pc.createOffer()
+  await pc.setLocalDescription(offer)
+  ws.send(JSON.stringify({ type: 'offer', targetId: viewerId, sdp: offer }))
+}
+
+function updateViewerCount() {
+  document.getElementById('viewer-num').textContent = peers.size
+}
+
+function goLive() {
+  if (!localStream) {
+    alert('請先選擇畫面來源')
+    return
+  }
+  connectSignaling()
+  updateStatus(true)
+}
+
+function endLive() {
+  if (ws) {
+    ws.send(JSON.stringify({ type: 'broadcaster-end' }))
+    ws.close()
+    ws = null
+  }
+  peers.forEach(pc => pc.close())
+  peers.clear()
+  updateStatus(false)
+  updateViewerCount()
+}
+
+window.addEventListener('beforeunload', () => {
+  if (isLive) endLive()
+})
+</script>
+</body>
+</html>
